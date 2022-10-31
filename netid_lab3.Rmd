@@ -1,0 +1,299 @@
+---
+title: "Lab 3"
+author: ""
+date: "Due on 10/07/2022 at 11:59 pm"
+output: pdf_document
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+load("/Users/danielthompson/Desktop/stat430/stat430materials/lectures/week5_runexpectancy/test.RData")
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(reshape2)
+library(tidyverse)
+foo <- NULL
+
+for(x in unique(Team.T$STATE)){
+  Team.T.S <- dat2016C %>% filter(STATE == x) %>% 
+    group_by(BATTING.TEAM, STATE, NEW.STATE) %>% tally()
+
+  SLN.Trans <- Team.T.S %>% filter(BATTING.TEAM == "SLN") %>% 
+    mutate(p = n / sum(n))
+
+  All.Trans <- dat2016C %>% filter(STATE == x) %>% 
+    group_by(NEW.STATE) %>% tally() %>% 
+    mutate(p = n / sum(n))
+
+  bar <- SLN.Trans %>% inner_join(All.Trans, by = "NEW.STATE") %>% 
+    mutate(p.EST = (n.x / (1274 + n.x) * p.x) + (1274 / (1274 + n.x) * p.y)) %>% 
+    ## needs to be normalized
+    mutate(p.EST = p.EST / sum(p.EST)) %>%
+    select(STATE, NEW.STATE, p.EST) 
+  foo <- rbind(foo, bar[, -1])
+
+}
+
+foo
+
+
+bar <- dcast(melt(foo, id.vars=c("STATE", "NEW.STATE")), STATE~NEW.STATE) %>% 
+  replace(is.na(.), 0)
+bar <- bar[, -1]
+
+P_matrix_SLN <- rbind(as.matrix(bar), rep(0,25))
+
+P_matrix_3_SLN <- P_matrix_SLN %*% P_matrix_SLN %*% P_matrix_SLN
+
+P_matrix_3_SLN %>% as_tibble(rownames = "STATE") %>% 
+  filter(STATE == "000 0") %>% 
+  gather(key = "NEW.STATE", value = "Prob", -STATE) %>% 
+  arrange(desc(Prob)) %>% 
+  head()
+
+sort(P_matrix_3_SLN[1,])
+sort(P_matrix_3[1,])
+```
+
+
+
+**Question 1** In class we computed the run expectancy matrix for the 2016 season. We used this quantity to assess the value of stolen bases and we computed the marginal break even stolen base percentage required to justify an attempt. Do the following:
+
+  - Rank catchers by their ability to prevent runs via catching runners attempting to steal bases. Report a top 10 list for most effective catchers at preventing runs via the stolen base. Also report the worse catchers. 
+```{r}
+stealing %>%
+  group_by(POS2_FLD_ID,EVENT_CD) %>%
+  summarise(N = n(), 
+																							avg_run_value = mean(run_value)) -> stealing_group  
+top_10 <- stealing_group %>%
+  mutate(EVENT_CD = 4) %>%
+  filter(N >=10) %>%
+  arrange(desc(avg_run_value))
+head(top_10, 10)
+```
+  
+  - Compute break even stolen base percentages at different base out states and for different innings. You can consider a minimum attempt threshold. When are good times to attempt or not a stolen base? 
+
+```{r}
+stealing %>%
+  group_by(STATE,INN_CT) %>%
+  summarise(N = n(), pct = 1 - mean(EVENT_OUTS_CT)) %>%
+  filter(N > 10) %>%
+  arrange(desc(pct)) -> best_times
+head(best_times,50)
+```
+
+
+**Question 2** In the Simulation Notes we considered team specific transition probabilities for one base out state corresponding to the St. Louis Cardinals in 2016. Do the following:
+
+  - Build the entire transition probability matrix for the St. Louis Cardinals. This matrix should be constructed using the normalized versions of the reliable probabilities with $K = 1274$. Hint: you may want to use the code in the notes within a loop, and then convert from long format to wide format using something like
+```{r, eval = FALSE}
+bar <- dcast(melt(foo, id.vars=c("STATE", "NEW.STATE")), STATE~NEW.STATE) %>% 
+  replace(is.na(.), 0)
+bar <- bar[,-1]
+P_matrix_SLN <- rbind(as.matrix(bar), rep(0,25))
+row.names(P_matrix_SLN) <- c("000 0", "000 1", "000 2", "001 0", "001 1", "001 2", "010 0", "010 1", "010 2", "011 0", "011 1", "011 2", "100 0", "100 1", "100 2", "101 0", "101 1", "101 2", "110 0", "110 1", "110 2", "111 0", "111 1", "111 2", "")
+P_matrix_SLN
+```
+
+ - Display the typical states after 3 PAs to start a half-inning for the 2016 St. Louis Cardinals. Were the 2016 Cardinals expected to end a half-inning more frequently than the average team after 3 PAs?
+
+```{r}
+P_matrix_3_SLN <- P_matrix_SLN %*% P_matrix_SLN %*% P_matrix_SLN
+
+P_matrix_3_SLN %>% as_tibble(rownames = "STATE") %>% 
+  filter(STATE == "000 0") %>% 
+  gather(key = "NEW.STATE", value = "Prob", -STATE) %>% 
+  arrange(desc(Prob))
+```
+ 
+ - Use the \texttt{simulate\_half\_inning} function and the Runs matrix \texttt{R} in the notes to construct a 2016 Cardinals specific RE24 matrix.
+
+```{r, cache=TRUE}
+B <- 1e5
+system.time({
+  RUNS <- replicate(B, simulate_half_inning(P_matrix_SLN, R))
+})
+RUNS.j <- function(j){
+  mean(replicate(B, simulate_half_inning(P_matrix_SLN, R, j))) }
+library(doMC)
+library(parallel)
+registerDoMC(cores=detectCores()-2) 
+## important for reproducibility
+RNGkind(kind = "L'Ecuyer-CMRG") 
+system.time({
+  RE_bat <- foreach(j = 1:24) %dopar% RUNS.j(j) %>% 
+    unlist() %>%
+    matrix(nrow = 8, ncol = 3, byrow = TRUE, 
+           dimnames =list(c("000","001","010","011",
+                          "100","101","110","111"),
+                          c("0 outs", "1 out", "2 outs")))
+})
+```
+
+```{r}
+round(RE_bat, 2)
+```
+ 
+
+**Question 3** Problem 5 on page 135 of Analyzing Baseball Data with R
+
+a.) 
+
+```{r}
+singles <- dat2016 %>%
+  filter(EVENT_CD == 20)
+```
+
+b.)
+
+```{r}
+singles %>%
+  group_by(STATE,NEW.STATE,RUNS.SCORED) %>%
+  summarise(N = n()) -> df
+```
+
+c.) 
+
+```{r}
+df %>%
+  filter(STATE == "100 0" | STATE == "100 1" | STATE == "100 2") %>%
+  arrange(desc(N)) -> df100
+df100
+```
+For the given out states, the likelihood of 110 over 101 is 2.91:1 for no outs, 3.03:1 for 1 out, and 2.49:1 for 2 outs. I conclude the runner is more likely to end up at second base on a single.
+
+d.)
+
+```{r}
+df %>%
+  filter(STATE == "110 0" | STATE == "110 1" | STATE == "110 2") %>%
+  arrange(desc(N)) -> df110
+df110
+```
+The likelihood of one run scoring over the bases being loaded is 1.78:1 (errors and FCs included). Given one run scores, the probability the base runner ends up staying on second instead of trying third is 0.357. A runner being thrown out at home or on the bases happens only 5.84% of the time and 8.18% on two outs. 
+
+**Question 4** Problem 1 on page 226 of Analyzing Baseball Data with R
+
+```{r}
+P <- matrix(c(0.3, 0.7, 0.0, 0.0,
+              0.0, 0.3, 0.7, 0.0,
+              0.0, 0.0, 0.3, 0.7,
+              0.0, 0.0, 0.0, 1.0), 4, 4, byrow=TRUE)
+```
+
+a.)
+
+```{r}
+P2 <- P %*% P
+P2
+```
+The probability of moving from 0 outs to 1 out after two plate appearances is 0.42
+
+b.)
+
+```{r}
+N <- solve(diag(c(1,1,1)) - P[-4,-4])
+Avg <- N[1,1] + N[1,2] + N[1,3]
+Avg
+```
+There are 4.285714 plate appearances per inning on average.
+
+**Question 5** Problem 3 on page 227 of Analyzing Baseball Data with R
+
+```{r, message=FALSE}
+setwd("~/Desktop/stat430/fa22_stat430_djt5/labs/lab3")
+library(tidyverse)
+data1968 <- read_csv("all1968.csv", na = character())
+data1968 %>%
+  mutate(runs = away_score_ct + home_score_ct,
+         half.inning = paste(game_id, inn_ct, bat_home_id),
+         runs.scored = 
+           (bat_dest_id > 3) + (run1_dest_id >3) + 
+           (run2_dest_id > 3) + (run3_dest_id > 3)) ->
+  data1968
+
+data1968 %>%
+  group_by(half.inning) %>%
+  summarise(outs.inning = sum(event_outs_ct),
+            runs.inning = sum(runs.scored),
+            runs.start = first(runs),
+            max.runs = runs.inning + runs.start) ->
+  half_innings
+
+data1968 %>%
+  inner_join(half_innings, by = "half.inning") %>%
+  mutate(bases = paste(ifelse(base1_run_id > "", 1, 0),
+                       ifelse(base2_run_id > "", 1, 0),
+                       ifelse(base3_run_id > "", 1, 0), sep = ""),
+         state = paste(bases, outs_ct),
+         nrunner1 = 
+           as.numeric(run1_dest_id == 1 | bat_dest_id == 1),
+         nrunner2 = 
+           as.numeric(run1_dest_id == 2 | bat_dest_id == 2 | run2_dest_id == 2),
+         nrunner3 =
+           as.numeric(run1_dest_id == 3 | run2_dest_id == 3 | run3_dest_id == 3 | bat_dest_id == 3),
+         nouts = outs_ct + event_outs_ct,
+         new.bases = paste(nrunner1, nrunner2, nrunner3, sep = ""),
+         new.state = paste(new.bases, nouts)) -> data1968
+
+data1968 %>%
+  filter((state != new.state) | (runs.scored >0 )) -> data1968
+
+data1968 %>%
+  filter(outs.inning == 3, bat_event_fl == TRUE) -> data1968C
+
+data1968C <- data1968C %>%
+  mutate(new.state = gsub("[0-1]{3} 3", "3", new.state))
+
+T_matrix <- data1968C %>%
+  select(state, new.state) %>%
+  table()
+
+P_matrix <- prop.table(T_matrix, 1)
+
+P_matrix <- rbind(P_matrix, c(rep(0,24), 1))
+
+count_runners_out <- function(s) {
+  s %>%
+    str_split("") %>%
+    pluck(1) %>%
+    as.numeric() %>%
+    sum(na.rm = TRUE)
+}
+
+runners_out <- sapply(row.names(T_matrix),
+                      count_runners_out)[-25]
+
+R <- outer(runners_out + 1, runners_out, FUN = "-")
+names(R) <- names(T_matrix)[-25]
+R <- cbind(R, rep(0,24))
+
+simulate_half_inning <- function(P, R, start = 1) {
+  s <- start
+  path <- NULL
+  runs <- 0
+  while (s < 25) {
+    s.new <- sample(1:25, size = 1, prob = P[s,])
+    path <- c(path, s.new) 
+    runs <- runs + R[s, s.new]
+    s <- s.new
+  }
+  runs
+}
+
+set.seed(111653)
+RUNS.j <- function(j) {
+  mean(replicate(10000, simulate_half_inning(T_matrix, R, j)))
+}
+```
+
+```{r}
+RE_bat_1968 <- sapply(1:24, RUNS.j) %>%
+  matrix(nrow = 8, ncol = 3, byrow = TRUE,
+         dimnames = list(c("000","001","010","011","100","101","110","111"),
+                         c("0 outs", "1 out", "2 outs")))
+round(RE_bat_1968, 2)
+round(RE_bat - RE_bat_1968, 10)
+```
+Teams are less likely to score with the bases loaded nowadays than in 1968. Teams in 2016 are also not as good as scoring runners from first, but are better at scoring runners from third.
