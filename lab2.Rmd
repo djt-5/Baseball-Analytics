@@ -1,0 +1,222 @@
+---
+title: "Lab 2"
+author: "Daniel Thompson"
+date: "Due on 09/23/2022 at 5:00 pm"
+output: pdf_document
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+**Question 1** The 2014 and 2015 Royals surprised a lot of people when they seemingly came out of nowhere with back-to-back world series including a title in 2015. In this problem and in the next problem we will investigate aspects of weirdness surrounding these Royals teams. See [this Foolish Baseball video](https://www.youtube.com/watch?v=L0bSAGd6_Zk&ab_channel=FoolishBaseball),  [this Keith Law article](https://www.espn.com/blog/keith-law/insider/post/_/id/137), and [this article about the failure of projection systems](https://www.foxsports.com/stories/other/heres-how-the-kansas-city-royals-blew-past-their-2015-projections) for background. In this problem you will construct a relevant dataset for analysis with the ultimate goal of describing just how unique these Royals were. Do the following: 
+
+  - Construct a data frame which includes the following variables from the \texttt{Teams} data frame in the \texttt{Lahman} package: \texttt{yearID}, \texttt{teamID}, \texttt{AB}, \texttt{SO}, \texttt{H}, \texttt{HR}, \texttt{R}, \texttt{RA}, \texttt{W}, and \texttt{L}. Only keep seasons dating back to 1990, and remove the 1994, 1995, and 2020 seasons.
+  
+```{r}
+library(Lahman)
+library(dplyr)
+Teams1990 <- Teams %>%
+  select(yearID, teamID, AB, SO, H, HR, R, RA, W, L, IPouts, BB, X2B, X3B, RA, HA, SOA, HRA, BBA, HBP) %>%
+  filter(yearID >= 1990 & yearID != 1994 & yearID != 1995 & yearID != 2020) 
+```
+
+  - Run the code below to scrape data from baseball reference, and only keep seasons dating back to 1990, and remove the 1994, 1995, and 2020 seasons. 
+
+```{r, eval = FALSE}  
+a = readr::read_csv("https://www.baseball-reference.com/data/war_daily_bat.txt", na = "NULL")
+b = readr::read_csv("https://www.baseball-reference.com/data/war_daily_pitch.txt", na = "NULL")  
+bwar_bat <- a %>%
+  filter(year_ID >= 1990 & year_ID != 1994 & year_ID != 1995 & year_ID != 2020)
+bwar_pit <- b %>%
+  filter(year_ID >= 1990 & year_ID != 1994 & year_ID != 1995 & year_ID != 2020)
+```  
+  
+  - Obtain total team defensive WAR \texttt{WAR\_def}, bullpen WAR, and base running runs \texttt{runs\_br} for each year and add these quantities to the data frame that you previously constructed from the \texttt{Teams} data frame. Call these variables, respectively, \texttt{dWAR}, \texttt{penWAR}, \texttt{BRruns}.
+  
+```{r}
+Teams1990 %>%
+  rename(team_ID = teamID, year_ID = yearID) -> teamDF
+
+bwar_bat$WAR_def[is.na(bwar_bat$WAR_def)] <- 0
+bwar_bat[bwar_bat == "ANA"] <- "LAA"
+bwar_bat[bwar_bat == "CAL"] <- "LAA"
+bwar_bat[bwar_bat == "MON"] <- "WSH"
+bwar_bat[bwar_bat == "TBD"] <- "TBR"
+bwar_bat[bwar_bat == "WSN"] <- "WSH"
+bwar_bat %>%
+  group_by(team_ID,year_ID) %>%
+  summarise(dWAR = sum(WAR_def),BRruns = sum(runs_br)) -> bwar_bat
+  
+teamDF[] <- lapply(teamDF, as.character)
+bwar_bat[] <- lapply(bwar_bat, as.character)
+
+teamDF$team_ID[teamDF$team_ID == "CHA"] <- "CHW"
+teamDF$team_ID[teamDF$team_ID == "CHN"] <- "CHC"
+teamDF$team_ID[teamDF$team_ID == "KCA"] <- "KCR"
+teamDF$team_ID[teamDF$team_ID == "LAN"] <- "LAD"
+teamDF$team_ID[teamDF$team_ID == "ML4"] <- "MIL"
+teamDF$team_ID[teamDF$team_ID == "NYA"] <- "NYY"
+teamDF$team_ID[teamDF$team_ID == "NYN"] <- "NYM"
+teamDF$team_ID[teamDF$team_ID == "SDN"] <- "SDP"
+teamDF$team_ID[teamDF$team_ID == "SFN"] <- "SFG"
+teamDF$team_ID[teamDF$team_ID == "SLN"] <- "STL"
+teamDF$team_ID[teamDF$team_ID == "FLO"] <- "FLA"
+teamDF$team_ID[teamDF$team_ID == "TBA"] <- "TBD"
+teamDF$team_ID[teamDF$team_ID == "CAL"] <- "LAA"
+teamDF$team_ID[teamDF$team_ID == "ANA"] <- "LAA"
+teamDF$team_ID[teamDF$team_ID == "WSN"] <- "WSH"
+teamDF$team_ID[teamDF$team_ID == "WAS"] <- "WSH"
+
+teamDF$year_ID_team_ID <- paste(teamDF$year_ID,teamDF$team_ID)
+teamDF %>% 
+  relocate(year_ID_team_ID, .before = year_ID)
+bwar_bat$year_ID_team_ID <- paste(bwar_bat$year_ID,bwar_bat$team_ID)
+bwar_bat %>% 
+  relocate(year_ID_team_ID, .before = team_ID)
+bwar_bat %>%
+  inner_join(teamDF, by = "year_ID_team_ID") -> bwar_bat_placeholder
+bwar_bat_placeholder %>%
+  relocate(year_ID_team_ID, .before = dWAR) -> Teams_1990
+
+bwar_pit[bwar_pit == "ANA"] <- "LAA"
+bwar_pit[bwar_pit == "CAL"] <- "LAA"
+bwar_pit[bwar_pit == "MON"] <- "WSH"
+bwar_pit[bwar_pit == "TBD"] <- "TBR"
+bwar_pit[bwar_pit == "WSN"] <- "WSH"
+
+bwar_pit %>%
+  mutate(startPercent = GS/G) %>%
+  mutate(bullpen = case_when(startPercent < 0.25 ~ "Y",
+                             startPercent > 0.25 ~ "N")) %>%
+  filter(bullpen == "Y") %>%
+  group_by(year_ID,team_ID) %>%
+  summarise(penWAR = sum(WAR)) -> bullpen_war_placeholder
+
+bullpen_war_placeholder$year_ID_team_ID <- paste(bullpen_war_placeholder$year_ID,bullpen_war_placeholder$team_ID)
+bullpen_war_placeholder %>%
+  inner_join(Teams_1990, by = "year_ID_team_ID") %>%
+  relocate(year_ID_team_ID, .before = penWAR) -> Final_Data_Frame
+``` 
+  
+  - The 2014-2015 Royals were known for elite base running, an elite bullpen, and elite defense. They were also known for not striking out and not hitting home runs. Add the following scaled variables separately for each season to the data frame that you constructed in the previous step: 
+    - \texttt{scaledSO = scale(SO / AB)}, 
+    - \texttt{scaledBA = scale(H/AB)}, 
+    - \texttt{scaledABpHR = scale(AB/HR)}, 
+    - \texttt{scaledpenWAR = scale(penWAR)}, 
+    - \texttt{scaleddWAR = scale(dWAR)}, 
+    - \texttt{scaledBRruns = scale(BRruns)}
+```{r}
+Final_Data_Frame[, c(4, 7:8, 11:27)] <- sapply(Final_Data_Frame[, c(4, 7:8, 11:27)], as.numeric)
+Final_Data_Frame %>%
+  mutate(scaledSO = scale(SO / AB)) %>%
+  mutate(scaledBA = scale(H/AB)) %>%
+  mutate(scaledABpHR = scale(AB/HR)) %>%
+  mutate(scaledpenWAR = scale(penWAR)) %>%
+  mutate(scaleddWAR = scale(dWAR)) %>%
+  mutate(Wpct = W/(W+L)) %>%
+  mutate(X1B = H - X2B - X3B - HR) %>%
+  mutate(OBP = (H + BB + HBP)/(AB + BB + HBP)) %>%  
+	mutate(SLG = (X1B + 2*X2B + 3*X3B + 4*HR)/AB) %>% 
+	mutate(OPS = OBP + SLG) %>% 
+	mutate(WHIP = 3*(HA + BBA)/IPouts) %>%
+  mutate(scaledBRruns = scale(BRruns)) -> Scaled_Final_Data_Frame
+```
+
+  - Compute and add winning percentage \texttt{Wpct} to your data frame. Use an equation in your notes and linear regression to compute the optimal $k$ so that \texttt{Wpct} is well-explained by \texttt{Wpytk} = $R^k/(R^k + RA^k)$. Add \texttt{Wpytk} and \texttt{residuals\_pytk = Wpct - Wpytk} to your data frame. 
+
+```{r}
+Scaled_Final_Data_Frame %>%
+  mutate(logWratio = log(W / L), 
+         logRratio = log(R / RA)) -> Scaled_Final_Data_Frame_For_Model
+
+pyFit <- lm(logWratio ~ 0 + logRratio, data = Scaled_Final_Data_Frame_For_Model) 
+summary(pyFit)
+```
+#K is 1.85414
+
+  - Display the rows of this data frame corresponding to the 2014-2015 Royals seasons.
+```{r}
+Scaled_Final_Data_Frame_For_Model %>%
+  filter(year_ID_team_ID == "2014 KCR" | year_ID_team_ID == "2015 KCR") %>%
+  mutate(Wpct_pytk = R**1.85414 / (R**1.85414 + RA**1.85414)) %>%
+  mutate(residuals_pytk = Wpct - Wpct_pytk) -> Royal_Model
+```
+
+
+**Question 2** In this problem we will perform analyses that investigate strengths and peculiarities of the 2014-2015 Royals. Do the following:
+
+  - Fit and analyze a regression model of \texttt{residuals\_pytk} on \texttt{penWAR}. Determine how many wins one would expect the Royals to obtain above their Pythagorean expectations on the basis of their bullpen.
+
+```{r}
+Scaled_Final_Data_Frame_For_Model %>%
+  mutate(Wpct_pytk = R**1.85414 / (R**1.85414 + RA**1.85414)) %>%
+  mutate(residuals_pytk = Wpct - Wpct_pytk) -> Residual_Model
+pen_regression <- lm(residuals_pytk ~ penWAR, data = Residual_Model)
+summary(pen_regression)
+#Royals_2014 -> 0.6256725
+#Royals_2015 -> 0.768471
+```
+The 2014 Royals would expect to gain 0.626 wins above expected, 2015 Royals 0.768 wins above expected.
+
+  - Total bullpen WAR is just one aspect of what made the 2014-2015 Royals what they were. We will now use [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering) implemented via the [kmeans function](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/kmeans) to determine whether or not teams similar to the 2014-2015 Royals beat their Pythagorean expectations. Do the following with the number of clusters ranging from $k = 30,...,50$: 1) run kmeans on a dataset containing the six scaled variables that you previously constructed with $k$ centers; 2) add the cluster assignments to the original dataset; 3) extract the average of \texttt{residuals\_pytk} for the clusters containing the 2014 or 2015 Royals after removing the Royals from consideration. When finished, compute the average \texttt{residuals\_pytk} value for the 2014 and 2015 Royals and then multiply this number by 162. This is the number of expected wins above/below their Pythagorean expectations that similar teams produced. Report this value and compare it with the 2014-2015 Royals.
+  
+```{r}
+clusterDF <- Residual_Model %>%
+  select(scaledSO, scaledBA, scaledABpHR, scaledpenWAR, scaleddWAR, scaledBRruns)
+clusterDF <- na.omit(clusterDF)
+cluster <- kmeans(clusterDF,30)
+Residual_Model$cluster <- cluster$cluster
+royal2014clus <- Residual_Model %>%
+  filter(year_ID_team_ID == "2014 KCR")
+#cluster is 9
+royal2015clus <- Residual_Model %>%
+  filter(year_ID_team_ID == "2015 KCR")
+#cluster is 26
+resid_a <- Residual_Model %>%
+  filter(cluster == royal2014clus$cluster) %>%
+  summarise(resids = mean(residuals_pytk))
+resid_b <- Residual_Model %>%
+  filter(cluster == royal2015clus$cluster) %>%
+  summarise(resids = mean(residuals_pytk))
+```
+The 2014 Royals' expected wins based on their Pythagorean W/L is 0.6594158 less than its real value. The 2015 Royals' expected wins based on their Pythagorean W/L is 0.5273168 less than its real value. 
+
+ - Add the \texttt{OPSscale} and \texttt{WHIPscale} variables that you computed in Question 1 of Lab 1 to the data frame. Run a regression with \texttt{Wpct} as the response variable and all eight scaled variables as predictors (you can drop terms if you want to). Does this model over/under estimate the success of the 2014-2015 Royals?
+```{r}
+Residual_Model %>%
+  mutate(OPSscale = scale(OPS)) %>%
+  mutate(WHIPscale = scale(WHIP)) -> Residual_Model_added
+regression_model <- lm(Wpct ~ OPSscale + WHIPscale + scaledSO + scaledBA + scaledpenWAR + scaledABpHR + scaleddWAR + scaledBRruns, data = Residual_Model_added)
+regression_model
+```
+This model tends to underestimate the success of the 2014-2015 Royals.
+
+**Question 3** Do the following: 
+
+  - Select a period of your choice (at least 20 years) and fit the Pythagorean formula model (after finding the optimal exponent) to the run-differential, win-loss data.
+  
+  - On the basis of your fit in the previous part and the list of managers obtained from Retrosheet, compile a top 10 list of managers who most overperformed their Pythagorean winning percentage and a top 10 list of managers who most underperformed their Pythagorean winning percentage.
+
+```{r}
+ManagersJoin <- Managers %>%
+  filter((yearID >= 2000) & (yearID < 2020)) %>%
+  rename(team_ID = teamID, year_ID = yearID) %>%
+  inner_join(Residual_Model, by = c("year_ID","team_ID"))
+
+```
+
+
+**Question 4** The first question on page 21 in Section 1.4.3 of Analyzing Baseball Data with R.
+```{r}
+
+```
+  
+
+
+
+
+
