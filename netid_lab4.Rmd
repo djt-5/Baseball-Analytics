@@ -1,0 +1,901 @@
+---
+title: "Lab 4"
+author: ""
+date: "Due on 10/28/2022 at 11:59 pm"
+output: pdf_document
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(gridExtra)
+library(Lahman)
+library(readr)
+library(tidyr)
+library(dplyr)
+library(datasets)
+library(tibble)
+setwd("/Users/danielthompson/Desktop/stat430/fa22_stat430_djt5/lab4accessories")
+sc_bip_small <- read_csv("sc_bip_small.csv")
+mlb_2017 <- read_csv("sc_2017.csv")
+mlb_2018 <- read_csv("sc_2018.csv")
+mlb_2019 <- read_csv("sc_2019.csv")
+mlb_2021 <- read_csv("sc_2021.csv")
+```
+
+
+
+**Question 1** Exercise 4 on page 290 (typo, replace 12.3 with 12.8) of Analyzing Baseball Data With R. You can swap out 2017 with any year that you want except for 2020.
+
+```{r}
+sc_bip_small %>%
+  filter(grepl("2017", game_date)) %>%
+  group_by(batter_name) %>%
+  summarise(N = n(), 
+																							avg_exit_velo = mean(launch_speed)) -> data2017  
+data2017 %>% 
+  drop_na() %>%
+  filter(N >=100) %>%
+  arrange(desc(avg_exit_velo)) -> judge
+head(judge, 10)
+```
+
+**Question 2** In this question we will try to predict next years slugging percentage using several variables including statcast variables. Load in the data set \texttt{sc\_bip\_small} and run the code below to calculate some possibly important variables that encode launch angle and exit velocity distributional information for each player.
+
+```{r, eval = FALSE}
+a <- sc_bip_small %>%
+  add_column(yearID = NA)
+a$yearID <- ifelse(grepl("2017",a$game_date),2017,a$yearID)
+a$yearID <- ifelse(grepl("2018",a$game_date),2018,a$yearID)
+a$yearID <- ifelse(grepl("2019",a$game_date),2019,a$yearID)
+a$yearID <- ifelse(grepl("2021",a$game_date),2021,a$yearID)
+foo <- a %>%
+  group_by(batter_name, yearID) %>% 
+  summarise(N = n(), launch_angle = launch_angle, launch_speed = launch_speed) %>% 
+  filter(N >= 10) %>% 
+  summarise(avg_la = mean(launch_angle, na.rm = TRUE), 
+            sd_la = sd(launch_angle, na.rm = TRUE), 
+            la10 = quantile(launch_angle, prob = c(0.10), na.rm = TRUE), 
+            la25 = quantile(launch_angle, prob = c(0.25), na.rm = TRUE), 
+            la50 = quantile(launch_angle, prob = c(0.50), na.rm = TRUE), 
+            la75 = quantile(launch_angle, prob = c(0.75), na.rm = TRUE), 
+            la90 = quantile(launch_angle, prob = c(0.90), na.rm = TRUE), 
+            avg_ev = mean(launch_speed, na.rm = TRUE), 
+            sd_ev = sd(launch_speed, na.rm = TRUE), 
+            ev10 = quantile(launch_speed, prob = c(0.10), na.rm = TRUE), 
+            ev25 = quantile(launch_speed, prob = c(0.25), na.rm = TRUE), 
+            ev50 = quantile(launch_speed, prob = c(0.50), na.rm = TRUE), 
+            ev75 = quantile(launch_speed, prob = c(0.75), na.rm = TRUE), 
+            ev90 = quantile(launch_speed, prob = c(0.90), na.rm = TRUE)) %>%
+  rename(name = batter_name)
+```
+
+
+ - Create a data frame for batters that contains slugging percentage (SLG) for each player. Call this data frame \texttt{bat\_stat}. This data frame should contain the following variables: \texttt{name}, \texttt{yearID}, \texttt{teamID}, \texttt{AB}, and \texttt{SLG}. You can restrict attention to batters who had at least 200 ABs and who only played on a single team (\texttt{stint = 1} in the \texttt{Batting} data frame in the \texttt{Lahman} package).
+
+```{r}
+People %>%
+  mutate(name = paste(nameFirst,nameLast)) -> People_Name
+Batting2 <- inner_join(Batting,People_Name, by = c("playerID"))
+Batting2 %>%
+  mutate(X1B = H - X2B - X3B - HR) %>%
+  mutate(SLG = (X1B + 2*X2B + 3*X3B + 4*HR)/AB) %>%
+  filter(stint == 1) %>%
+  filter(AB >= 200) %>%
+  filter(yearID >= 2017 & yearID != 2020) -> df_2017
+df_2017 %>%
+  select(name, yearID, teamID, AB, SLG) -> bat_stat
+```
+
+ - Merge \texttt{foo} into \texttt{bat\_stat} using \texttt{inner\_join} or a similar function. Run the following code which creates new variables \texttt{SLG\_next} and \texttt{team\_next} which are a player's slugging percentage and team for the next season. The code also creates a categorical variable \texttt{COL} which indicates whether the player's next season is with the Rockies. Note that you may have to change the \texttt{by} argument in the \texttt{inner\_join} call below to get it to work.
+
+```{r, eval = FALSE}
+bat_stat <- inner_join(bat_stat, foo, by = c("name", "yearID"))
+bar <- bat_stat %>% 
+  group_by(name, yearID) %>% 
+  summarise(SLG, teamID) %>% 
+  mutate(SLG_next = SLG[match(yearID, yearID-1)]) %>% 
+  mutate(team_next = teamID[match(yearID, yearID-1)]) %>% 
+  mutate(yearID = ifelse(yearID == 2020, 2021, yearID)) %>% 
+  select(-SLG,-teamID)
+bat_stat <- inner_join(bat_stat, bar, by = c("name", "yearID")) %>% 
+  mutate(COL = ifelse(team_next == "COL",1,0)) %>% 
+  filter(complete.cases(.))
+```
+
+
+ - We are going to use a simple procedure to assess predictive performance. Run the code below to split \texttt{bat\_stat} into a model training data set \texttt{train} and a model testing data set \texttt{test}.
+
+
+```{r, eval = FALSE}
+set.seed(13)
+ind <- sample(1:nrow(bat_stat), size = 400, replace = FALSE)
+train <- bat_stat[ind, ]
+test <- bat_stat[-ind, ]
+```
+
+
+ - Fit and compare the following models. Which model would you select for predicting slugging percentage (root mean squared prediction error is a good metric for assessing predictive performance)? Are statcast variables important for predicting slugging percentage? Explain. Try to find a model which offers better predictive performance than the best model below. Comment on the success of your efforts.
+
+Due to the RMSE for m_big being the lowest, I conclude I'd select m_big for predicting slugging percentage.
+```{r, eval = FALSE}
+m_big <- lm(SLG_next ~ SLG + avg_la + avg_ev + team_next + sd_la + sd_ev + 
+           sd_la*avg_la + sd_ev*avg_ev +
+           la10 + la25 + la50 + la75 + la90 + 
+           ev10 + ev25 + ev50 + ev75 + ev90, 
+         data = train)
+
+m_small <- lm(SLG_next ~ SLG + avg_la + avg_ev + COL, 
+         data = train)
+
+m_smaller <- lm(SLG_next ~ SLG  + COL, data = train)
+
+sqrt(mean(m_big$residuals^2))
+sqrt(mean(m_small$residuals^2))
+sqrt(mean(m_smaller$residuals^2))
+```
+
+
+
+**Question 3** The 2021 San Francisco Giants certainly surprised a lot of people when they won 107 games with a rotation led by Kevin Gausman, Logan Webb, Anthony DeSclafani, and Alex Wood. Coming into the 2021 season, I think it is fair to say that this is a shaky rotation. One [commentator](https://aroundthefoghorn.com/2021/03/27/sf-giants-rotation-risky-experiment/) said that the Giants have developed reputation as an organization that can make players better, but that reputation will be tested with a risky experiment in 2021. Let's investigate the success of the 2021 San Francisco Giants. In this question we will look at the 2021 San Francisco Giants pitching staff from a recent historical perspective. In the next question we will examine specific Giants pitchers. As an aside, anyone can go down the rabbit hole that your professor went down as this problem was developed:
+
+ - [Logan Webb, As Advertised](https://blogs.fangraphs.com/logan-webb-as-advertised/)
+ - [What the Heck Is a Flat Sinker, Anyway?](https://blogs.fangraphs.com/what-the-heck-is-a-flat-sinker-anyway/)
+ - [The Giants Took a New Angle With Sinkers](https://blogs.fangraphs.com/the-giants-took-a-new-angle-with-sinkers/)
+ - [The Seam-Shifted Revolution Is Headed for the Mainstream](https://blogs.fangraphs.com/the-seam-shifted-revolution-is-headed-for-the-mainstream/)
+ - [Pitch Movement, Spin Efficiency, and All That](https://tht.fangraphs.com/pitch-movement-spin-efficiency-and-all-that/)
+ - [Prospectus Feature: All Spin Is Not Alike](https://www.baseballprospectus.com/news/article/25915/prospectus-feature-all-spin-is-not-alike/)
+ - [Determining the 3D Spin Axis from Statcast Data](http://baseball.physics.illinois.edu/trackman/SpinAxis.pdf)
+
+First create a data frame that contains the following variables on team pitching statistics: \texttt{yearID}, \texttt{teamID}, \texttt{frac\_junk}, \texttt{ERA}, \texttt{HAp9}, \texttt{HRAp9}, and \texttt{WAR}. This data frame only needs to be created for the 2017, 2018, 2019, and 2021 baseball seasons. The variables \texttt{HAp9} and \texttt{HRAp9} are, respectively, hits allowed per 9 innings and home runs allowed per 9 innings. The variable \texttt{frac\_junk} is the fraction of team pitches that are sinkers (SI), splitters (FS), sliders (SL), or change ups (CH) for a given season. Calculation of \texttt{frac\_junk} involves the use of all statcast data for the 2017, 2018, 2019, and 2021 baseball seasons. The statcast data set is massive and a Rmd document might not compile if this data set is directly loaded in and manipulated. I recommend that you first perform your data manipulations to statcast data in an active R session, then save a much smaller data set which contains your data manipulations onto your computer, then load this smaller data set into the Rmd document corresponding to your lab assignment. The code below obtains pitching WAR.
+ 
+```{r, eval = FALSE}
+Pitching2 <- inner_join(Pitching,People_Name, by = c("playerID"))
+Pitching2 %>%
+  mutate(IP = IPouts/3) %>%
+  mutate(HAp9 = (H/IP)*9) %>%
+  mutate(HRAp9 = (HR/IP)*9) %>%
+  select(name,yearID,teamID,ERA,HAp9,HRAp9) %>%
+  filter(yearID >= 2017) -> Pitching_df
+bwar_pit = readr::read_csv("https://www.baseball-reference.com/data/war_daily_pitch.txt", na = "NULL")
+bwar_pit[is.na(bwar_pit)] <- 0
+bwar_pit %>%
+	filter(year_ID >= 2017 & year_ID != 2020 & year_ID != 2022) %>% 
+	select(team_ID, year_ID, WAR) %>% 
+  group_by(team_ID, year_ID) %>%
+  summarise(N = n(), WAR = sum(WAR)) %>%
+	rename(teamID = team_ID, yearID = year_ID) -> bwar_pit
+
+mlb_2017$teamID <- NA
+mlb_2017$teamID <- ifelse(grepl("Top",mlb_2017$inning_topbot),mlb_2017$home_team,mlb_2017$away_team)
+mlb_2017$junk_pitch <- NA
+mlb_2017$junk_pitch <- ifelse(((mlb_2017$pitch_type == "SI") | (mlb_2017$pitch_type == "FS") | (mlb_2017$pitch_type == "SL") | (mlb_2017$pitch_type == "CH")),1,0)
+mlb_2017 %>% 
+  filter(junk_pitch == 1 | junk_pitch == 0) %>%
+  group_by(teamID) %>%
+  summarise(N = n(), junk_pct = mean(junk_pitch)) -> mlb_2017_junk
+
+mlb_2018$teamID <- NA
+mlb_2018$teamID <- ifelse(grepl("Top",mlb_2018$inning_topbot),mlb_2018$home_team,mlb_2018$away_team)
+mlb_2018$junk_pitch <- NA
+mlb_2018$junk_pitch <- ifelse(((mlb_2018$pitch_type == "SI") | (mlb_2018$pitch_type == "FS") | (mlb_2018$pitch_type == "SL") | (mlb_2018$pitch_type == "CH")),1,0)
+mlb_2018 %>% 
+  filter(junk_pitch == 1 | junk_pitch == 0) %>%
+  group_by(teamID) %>%
+  summarise(N = n(), junk_pct = mean(junk_pitch)) -> mlb_2018_junk
+
+mlb_2019$teamID <- NA
+mlb_2019$teamID <- ifelse(grepl("Top",mlb_2019$inning_topbot),mlb_2019$home_team,mlb_2019$away_team)
+mlb_2019$junk_pitch <- NA
+mlb_2019$junk_pitch <- ifelse(((mlb_2019$pitch_type == "SI") | (mlb_2019$pitch_type == "FS") | (mlb_2019$pitch_type == "SL") | (mlb_2019$pitch_type == "CH")),1,0)
+mlb_2019 %>% 
+  filter(junk_pitch == 1 | junk_pitch == 0) %>%
+  group_by(teamID) %>%
+  summarise(N = n(), junk_pct = mean(junk_pitch)) -> mlb_2019_junk
+
+mlb_2021$teamID <- NA
+mlb_2021$teamID <- ifelse(grepl("Top",mlb_2021$inning_topbot),mlb_2021$home_team,mlb_2021$away_team)
+mlb_2021$junk_pitch <- NA
+mlb_2021$junk_pitch <- ifelse(((mlb_2021$pitch_type == "SI") | (mlb_2021$pitch_type == "FS") | (mlb_2021$pitch_type == "SL") | (mlb_2021$pitch_type == "CH")),1,0)
+mlb_2021 %>% 
+  filter(junk_pitch == 1 | junk_pitch == 0) %>%
+  group_by(teamID) %>%
+  summarise(N = n(), junk_pct = mean(junk_pitch)) -> mlb_2021_junk
+
+mlb_2017_junk$yearID <- 2017
+mlb_2018_junk$yearID <- 2018
+mlb_2019_junk$yearID <- 2019
+mlb_2021_junk$yearID <- 2021
+
+statcast_junk <- rbind(mlb_2017_junk,mlb_2018_junk,mlb_2019_junk,mlb_2021_junk)
+```
+
+Use the data set that you discover to study the 2021 piching season. Were the 2021 Giants successful? Did they perform similarly to other teams that throw a lot of junk balls where junk is defined as sinkers, splitters, sliders, and change ups? Elaborate.
+
+```{r}
+bwar_pit$teamID[bwar_pit$teamID == "WSN"] <- "WSH"
+bwar_pit$teamID[bwar_pit$teamID == "TBR"] <- "TB"
+bwar_pit$teamID[bwar_pit$teamID == "KCR"] <- "KC"
+bwar_pit$teamID[bwar_pit$teamID == "SDP"] <- "SD"
+bwar_pit$teamID[bwar_pit$teamID == "SFG"] <- "SF"
+bwar_pit$teamID[bwar_pit$teamID == "CHW"] <- "CWS"
+bwar_pit %>%
+  filter(yearID == 2021) -> bwar_pit_2021
+mlb_2021_junk %>%
+  inner_join(bwar_pit_2021, by = c("yearID","teamID")) -> final_df
+attach(final_df)
+plot(WAR ~ junk_pct, ylab = "Pitcher WAR", xlab = "Percentage of Pitches that are Junk Pitches")
+abline(lm(WAR ~ junk_pct), col="red")
+text(WAR ~ junk_pct, labels = final_df$teamID)
+```
+As we can see from the plot, San Francisco is well above the expected WAR value for a team that throws nearly 60% of their pitches for junk.
+
+
+**Question 4** For each pitch type thrown by Kevin Gausman, Logan Webb, Anthony DeSclafani, and Alex Wood, compute annual averages of \texttt{release\_spin\_rate}, 
+\texttt{effective\_speed}, 
+\texttt{plate\_x}, 
+\texttt{plate\_z}, 
+\texttt{pfx\_x}, 
+\texttt{pfx\_z}, 
+\texttt{release\_x}, 
+and \texttt{release\_z}, and compute the annual pitch type percentages for each of these pitchers. Now display a graphic showing how these annual averages change over time for each of these pitchers. It is best to display all nine plots for each pitcher in a single grid of plots rather than printing off nine separate plots. This can be achieved using the \texttt{grid.arrange} function in the \texttt{gridExtra} package. Comment on how the approach of these pitchers changed over time with an emphasis on any changes made in 2021. Comment on any commonalities or differences between these pitchers. What are some of the reasons for the pitching success of 2021 San Francisco Giants pitchers?
+
+```{r}
+mlb_2017$Four_Seam_Fastball <- NA
+mlb_2017$Knuckle_Curve <- NA
+mlb_2017$Slider <- NA
+mlb_2017$Changeup <- NA
+mlb_2017$Cutter <- NA
+mlb_2017$Curveball <- NA
+mlb_2017$Sinker <- NA
+
+mlb_2017$Four_Seam_Fastball <- ifelse(grepl("FF",mlb_2017$pitch_type),1,0)
+mlb_2017$Knuckle_Curve <- ifelse(grepl("KC",mlb_2017$pitch_type),1,0)
+mlb_2017$Slider <- ifelse(grepl("SL",mlb_2017$pitch_type),1,0)
+mlb_2017$Changeup <- ifelse(grepl("CH",mlb_2017$pitch_type),1,0)
+mlb_2017$Cutter <- ifelse(grepl("FC",mlb_2017$pitch_type),1,0)
+mlb_2017$Curveball <- ifelse(grepl("CU",mlb_2017$pitch_type),1,0)
+mlb_2017$Sinker <- ifelse(grepl("SI",mlb_2017$pitch_type),1,0)
+
+mlb_2017 <- mlb_2017[!is.na(mlb_2017$pitch_type), ]
+mlb_2017 <- mlb_2017[!is.na(mlb_2017$release_spin_rate), ]
+mlb_2017 <- mlb_2017[!is.na(mlb_2017$effective_speed), ]
+mlb_2017 <- mlb_2017[!is.na(mlb_2017$plate_x), ]
+mlb_2017 <- mlb_2017[!is.na(mlb_2017$plate_z), ]
+mlb_2017 <- mlb_2017[!is.na(mlb_2017$pfx_x), ]
+mlb_2017 <- mlb_2017[!is.na(mlb_2017$pfx_z), ]
+mlb_2017 <- mlb_2017[!is.na(mlb_2017$release_pos_x), ]
+mlb_2017 <- mlb_2017[!is.na(mlb_2017$release_pos_z), ]
+
+Gausman_2017 <- mlb_2017 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 592332) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+Gausman_2017$Name <- "Kevin Gausman"
+Gausman_2017$Year <- 2017
+
+Wood_2017 <- mlb_2017 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 622072) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+Wood_2017$Name <- "Alex Wood"
+Wood_2017$Year <- 2017
+
+mlb_2018$Four_Seam_Fastball <- NA
+mlb_2018$Knuckle_Curve <- NA
+mlb_2018$Slider <- NA
+mlb_2018$Changeup <- NA
+mlb_2018$Cutter <- NA
+mlb_2018$Curveball <- NA
+mlb_2018$Sinker <- NA
+
+mlb_2018$Four_Seam_Fastball <- ifelse(grepl("FF",mlb_2018$pitch_type),1,0)
+mlb_2018$Knuckle_Curve <- ifelse(grepl("KC",mlb_2018$pitch_type),1,0)
+mlb_2018$Slider <- ifelse(grepl("SL",mlb_2018$pitch_type),1,0)
+mlb_2018$Changeup <- ifelse(grepl("CH",mlb_2018$pitch_type),1,0)
+mlb_2018$Cutter <- ifelse(grepl("FC",mlb_2018$pitch_type),1,0)
+mlb_2018$Curveball <- ifelse(grepl("CU",mlb_2018$pitch_type),1,0)
+mlb_2018$Sinker <- ifelse(grepl("SI",mlb_2018$pitch_type),1,0)
+
+mlb_2018 <- mlb_2018[!is.na(mlb_2018$pitch_type), ]
+mlb_2018 <- mlb_2018[!is.na(mlb_2018$release_spin_rate), ]
+mlb_2018 <- mlb_2018[!is.na(mlb_2018$effective_speed), ]
+mlb_2018 <- mlb_2018[!is.na(mlb_2018$plate_x), ]
+mlb_2018 <- mlb_2018[!is.na(mlb_2018$plate_z), ]
+mlb_2018 <- mlb_2018[!is.na(mlb_2018$pfx_x), ]
+mlb_2018 <- mlb_2018[!is.na(mlb_2018$pfx_z), ]
+mlb_2018 <- mlb_2018[!is.na(mlb_2018$release_pos_x), ]
+mlb_2018 <- mlb_2018[!is.na(mlb_2018$release_pos_z), ]
+
+Gausman_2018 <- mlb_2018 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 592332) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+Gausman_2018$Name <- "Kevin Gausman"
+Gausman_2018$Year <- 2018
+
+DeSclafani_2018 <- mlb_2018 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 543101) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+DeSclafani_2018$Name <- "Anthony DeSclafani"
+DeSclafani_2018$Year <- 2018
+
+Wood_2018 <- mlb_2018 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 622072) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+Wood_2018$Name <- "Alex Wood"
+Wood_2018$Year <- 2018
+
+mlb_2019$Four_Seam_Fastball <- NA
+mlb_2019$Knuckle_Curve <- NA
+mlb_2019$Slider <- NA
+mlb_2019$Changeup <- NA
+mlb_2019$Cutter <- NA
+mlb_2019$Curveball <- NA
+mlb_2019$Sinker <- NA
+
+mlb_2019$Four_Seam_Fastball <- ifelse(grepl("FF",mlb_2019$pitch_type),1,0)
+mlb_2019$Knuckle_Curve <- ifelse(grepl("KC",mlb_2019$pitch_type),1,0)
+mlb_2019$Slider <- ifelse(grepl("SL",mlb_2019$pitch_type),1,0)
+mlb_2019$Changeup <- ifelse(grepl("CH",mlb_2019$pitch_type),1,0)
+mlb_2019$Cutter <- ifelse(grepl("FC",mlb_2019$pitch_type),1,0)
+mlb_2019$Curveball <- ifelse(grepl("CU",mlb_2019$pitch_type),1,0)
+mlb_2019$Sinker <- ifelse(grepl("SI",mlb_2019$pitch_type),1,0)
+
+mlb_2019 <- mlb_2019[!is.na(mlb_2019$pitch_type), ]
+mlb_2019 <- mlb_2019[!is.na(mlb_2019$release_spin_rate), ]
+mlb_2019 <- mlb_2019[!is.na(mlb_2019$effective_speed), ]
+mlb_2019 <- mlb_2019[!is.na(mlb_2019$plate_x), ]
+mlb_2019 <- mlb_2019[!is.na(mlb_2019$plate_z), ]
+mlb_2019 <- mlb_2019[!is.na(mlb_2019$pfx_x), ]
+mlb_2019 <- mlb_2019[!is.na(mlb_2019$pfx_z), ]
+mlb_2019 <- mlb_2019[!is.na(mlb_2019$release_pos_x), ]
+mlb_2019 <- mlb_2019[!is.na(mlb_2019$release_pos_z), ]
+
+Gausman_2019 <- mlb_2019 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 592332) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+Gausman_2019$Name <- "Kevin Gausman"
+Gausman_2019$Year <- 2019
+
+Webb_2019 <- mlb_2019 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 657277) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+Webb_2019$Name <- "Logan Webb"
+Webb_2019$Year <- 2019
+
+DeSclafani_2019 <- mlb_2019 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 543101) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+DeSclafani_2019$Name <- "Anthony DeSclafani"
+DeSclafani_2019$Year <- 2019
+
+Wood_2019 <- mlb_2019 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 622072) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+Wood_2019$Name <- "Alex Wood"
+Wood_2019$Year <- 2019
+
+mlb_2021$Four_Seam_Fastball <- NA
+mlb_2021$Knuckle_Curve <- NA
+mlb_2021$Slider <- NA
+mlb_2021$Changeup <- NA
+mlb_2021$Cutter <- NA
+mlb_2021$Curveball <- NA
+mlb_2021$Sinker <- NA
+
+mlb_2021$Four_Seam_Fastball <- ifelse(grepl("FF",mlb_2021$pitch_type),1,0)
+mlb_2021$Knuckle_Curve <- ifelse(grepl("KC",mlb_2021$pitch_type),1,0)
+mlb_2021$Slider <- ifelse(grepl("SL",mlb_2021$pitch_type),1,0)
+mlb_2021$Changeup <- ifelse(grepl("CH",mlb_2021$pitch_type),1,0)
+mlb_2021$Cutter <- ifelse(grepl("FC",mlb_2021$pitch_type),1,0)
+mlb_2021$Curveball <- ifelse(grepl("CU",mlb_2021$pitch_type),1,0)
+mlb_2021$Sinker <- ifelse(grepl("SI",mlb_2021$pitch_type),1,0)
+
+mlb_2021 <- mlb_2021[!is.na(mlb_2021$pitch_type), ]
+mlb_2021 <- mlb_2021[!is.na(mlb_2021$release_spin_rate), ]
+mlb_2021 <- mlb_2021[!is.na(mlb_2021$effective_speed), ]
+mlb_2021 <- mlb_2021[!is.na(mlb_2021$plate_x), ]
+mlb_2021 <- mlb_2021[!is.na(mlb_2021$plate_z), ]
+mlb_2021 <- mlb_2021[!is.na(mlb_2021$pfx_x), ]
+mlb_2021 <- mlb_2021[!is.na(mlb_2021$pfx_z), ]
+mlb_2021 <- mlb_2021[!is.na(mlb_2021$release_pos_x), ]
+mlb_2021 <- mlb_2021[!is.na(mlb_2021$release_pos_z), ]
+
+Gausman_2021 <- mlb_2021 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 592332) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+Gausman_2021$Name <- "Kevin Gausman"
+Gausman_2021$Year <- 2021
+
+Webb_2021 <- mlb_2021 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 657277) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+Webb_2021$Name <- "Logan Webb"
+Webb_2021$Year <- 2021
+
+DeSclafani_2021 <- mlb_2021 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 543101) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+DeSclafani_2021$Name <- "Anthony DeSclafani"
+DeSclafani_2021$Year <- 2021
+
+Wood_2021 <- mlb_2021 %>%
+  select(pitcher,
+         Four_Seam_Fastball,
+         Knuckle_Curve,
+         Slider,
+         Changeup,
+         Cutter,
+         Curveball,
+         Sinker,
+         release_spin_rate,
+         effective_speed,
+         plate_x,
+         plate_z,
+         pfx_x,
+         pfx_z,
+         release_pos_x,
+         release_pos_z) %>%
+  filter(pitcher == 622072) %>%
+  group_by(pitcher) %>%
+  summarise(N = n(),
+            FB_pct = mean(Four_Seam_Fastball),
+            KC_pct = mean(Knuckle_Curve), 
+            SL_pct = mean(Slider),
+            CH_pct = mean(Changeup),
+            FC_pct = mean(Cutter),
+            CB_pct = mean(Curveball),
+            SI_pct = mean(Sinker),
+            release_spin_rate = mean(release_spin_rate),
+            effective_speed = mean(effective_speed),
+            plate_x = mean(plate_x),
+            plate_z = mean(plate_z),
+            pfx_x = mean(pfx_x),
+            pfx_z = mean(pfx_z))
+
+Wood_2021$Name <- "Alex Wood"
+Wood_2021$Year <- 2021
+```
+
+```{r}
+df <- rbind(Gausman_2017,
+      Gausman_2018,
+      Gausman_2019,
+      Gausman_2021,
+      Webb_2019,
+      Webb_2021,
+      DeSclafani_2018,
+      DeSclafani_2019,
+      DeSclafani_2021,
+      Wood_2017,
+      Wood_2018,
+      Wood_2019,
+      Wood_2021)
+
+attach(df)
+plot(FB_pct ~ Year, ylab = "Fastball Percentage", xlab = "Year")  
+abline(lm(FB_pct ~ Year), col = "RED") 
+text(FB_pct ~ Year, labels = df$Name)
+
+plot(KC_pct ~ Year, ylab = "Knuckle Curve Percentage", xlab = "Year")
+abline(lm(KC_pct ~ Year), col = "RED")
+text(KC_pct ~ Year, labels = df$Name)
+
+plot(SL_pct ~ Year, ylab = "Slider Percentage", xlab = "Year")
+abline(lm(SL_pct ~ Year), col = "RED")
+text(SL_pct ~ Year, labels = df$Name) 
+
+plot(CH_pct ~ Year, ylab = "Changeup Percentage", xlab = "Year")
+abline(lm(CH_pct ~ Year), col = "RED")
+text(CH_pct ~ Year, labels = df$Name)
+
+plot(FC_pct ~ Year, ylab = "Cutter Percentage", xlab = "Year")
+abline(lm(FC_pct ~ Year), col = "RED")
+text(FC_pct ~ Year, labels = df$Name)
+
+plot(CB_pct ~ Year, ylab = "Curveball Percentage", xlab = "Year")
+abline(lm(CB_pct ~ Year), col = "RED")
+text(CB_pct ~ Year, labels = df$Name)
+
+plot(SI_pct ~ Year, ylab = "Sinker Percentage", xlab = "Year")
+abline(lm(SI_pct ~ Year), col = "RED")
+text(SI_pct ~ Year, labels = df$Name)
+
+plot(release_spin_rate ~ Year, ylab = "Release Spin Rate", xlab = "Year")
+abline(lm(release_spin_rate ~ Year), col = "RED")
+text(release_spin_rate ~ Year, labels = df$Name)
+
+plot(effective_speed ~ Year, ylab = "Effective Speed", xlab = "Year")
+abline(lm(effective_speed ~ Year), col = "RED")
+text(effective_speed ~ Year, labels = df$Name)
+
+plot(plate_x ~ Year, ylab = "Plate_X", xlab = "Year")
+abline(lm(plate_x ~ Year), col = "RED")
+text(plate_x ~ Year, labels = df$Name)
+
+plot(plate_z ~ Year, ylab = "Plate_Z", xlab = "Year")
+abline(lm(plate_z ~ Year), col = "RED")
+text(plate_z ~ Year, labels = df$Name) 
+
+plot(pfx_x ~ Year, ylab = "Pfx_X", xlab = "Year")
+abline(lm(pfx_x ~ Year), col = "RED")
+text(pfx_x ~ Year, labels = df$Name)
+
+plot(pfx_z ~ Year, ylab = "Pfx_Z", xlab = "Year")
+abline(lm(pfx_z ~ Year), col = "RED")
+text(pfx_z ~ Year, labels = df$Name)
+```
+As I couldn't figure out how to put these plots in an arranged grid (which is on me) I've found that decreasing knuckleball curves, increasing sliders, increasing cutters, and decreasing pfx_z were among the significant changes made to the Giants 2021 pitching staff.
