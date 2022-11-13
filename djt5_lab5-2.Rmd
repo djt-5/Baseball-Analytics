@@ -1,0 +1,336 @@
+---
+title: "Lab 5 Stat 430"
+author: "Austin Shwatal"
+date: "2022-11-04"
+output: html_document
+---
+
+
+
+```{r}
+library(ggplot2)
+library(Lahman)
+library(tidyverse)
+People %>%
+  mutate(birthyear = ifelse(birthMonth >= 7,
+                            birthYear +1, birthYear),
+         Player = paste(nameFirst,nameLast)) %>%
+  select(playerID, Player, birthYear) -> df
+Batting %>%
+  inner_join(df, by = "playerID") %>%
+  mutate(Age = yearID - birthYear) %>%
+  mutate(X1B = H - X2B - X3B - HR) %>%
+  select(Player, 
+         stint, 
+         playerID, 
+         yearID, 
+         AB, 
+         Age, 
+         R, 
+         H, 
+         X1B, 
+         X2B, 
+         X3B, 
+         HR, 
+         RBI, 
+         SB, 
+         BB, 
+         SO, 
+         HBP) %>%
+  group_by(playerID, yearID) %>%
+  mutate(AB = sum(AB), 
+         R = sum(R), 
+         H = sum(H), 
+         X1B = sum(X1B), 
+         X2B = sum(X2B), 
+         X3B = sum(X3B), 
+         HR = sum(HR), 
+         RBI = sum(RBI), 
+         SB = sum(SB), 
+         SO = sum(SO), 
+         HBP = sum(HBP))%>%
+  filter(stint == 1) %>%
+  group_by(playerID) %>%
+  mutate(CareerAB = sum(AB)) %>%
+  mutate(CareerHR = sum(HR)) %>%
+  mutate(CuHR = cumsum(HR)) %>%
+  mutate(CuAB = cumsum(AB)) %>%
+  mutate(CuR = cumsum(R)) %>%
+  mutate(CuH = cumsum(H)) %>%
+  mutate(Cu1B = cumsum(X1B)) %>%
+  mutate(Cu2B = cumsum(X2B)) %>%
+  mutate(Cu3B = cumsum(X3B)) %>%
+  mutate(CuRBI = cumsum(RBI)) %>%
+  mutate(CuSB = cumsum(SB)) %>%
+  mutate(CuBB = cumsum(BB)) %>%
+  mutate(CuSO = cumsum(SO)) %>%
+  mutate(CuHBP = cumsum(HBP)) %>%
+  na.omit(Age) %>%
+  arrange(desc(CuHR)) -> StartData
+#What do we want?
+#Any player over 6500 career AB is safe
+#If not, your debut must be in 2010 or after
+#How do we find only players with debuts in 2010 or after?
+#First off, for any year 2010 or after your AB must equal your CAB
+#If not, the player has to be removed completely
+#Let's start by making the dataframe of only our hall of famers
+StartData %>%
+  filter(CareerAB > 5000) -> HOFData
+HOFData$Player <- ifelse(HOFData$playerID == "griffke02", "Ken Griffey Jr.", HOFData$Player)
+#We'll rbind it to the dataframe of our young batters later. 
+Bye_Bye_2009 <- StartData[!(StartData$yearID < 2010),]
+Bye_Bye_2009 %>%
+  arrange(yearID, descreasing = FALSE) %>%
+  mutate(CAB2010 = cumsum(AB)) -> Bye_Again_2009
+Young_Hitters <- Bye_Again_2009[!(Bye_Again_2009$CuAB > Bye_Again_2009$CAB2010),] %>% arrange(desc(CuHR))
+Almost_There_Data <- rbind(HOFData,Young_Hitters)
+Almost_There_Data %>%
+  filter(CareerHR >= 20) -> FullData
+#Now we have every player that meets the criteria
+```
+
+```{r}
+Pitching %>%
+  inner_join(df, by = "playerID") %>%
+  mutate(Age = yearID - birthYear) %>%
+  select(
+    playerID,
+    Player,
+    Age,
+    yearID,
+    stint,
+    W,
+    L,
+    G,
+    GS,
+    CG,
+    SHO,
+    SV,
+    IPouts,
+    H, 
+    ER,
+    HR,
+    BB,
+    SO) %>%
+  group_by(playerID, yearID) %>%
+  mutate(W = sum(W)) %>%
+  mutate(L = sum(L)) %>%
+  mutate(G = sum(G)) %>%
+  mutate(GS = sum(GS)) %>%
+  mutate(CG = sum(CG)) %>%
+  mutate(SHO = sum(SHO)) %>%
+  mutate(SV = sum(SV)) %>%
+  mutate(IP = sum(IPouts)/3) %>%
+  mutate(H = sum(H)) %>%
+  mutate(ER = sum(ER)) %>%
+  mutate(HR = sum(HR)) %>%
+  mutate(BB = sum(BB)) %>%
+  mutate(SO = sum(SO)) %>%
+  filter(stint == 1) %>%
+  group_by(playerID) %>%
+  mutate(CareerSV = sum(SV)) %>%
+  mutate(CareerGS = sum(GS)) %>%
+  mutate(CuW = cumsum(W)) %>%
+  mutate(CuL = cumsum(L)) %>%
+  mutate(CuG = cumsum(G)) %>%
+  mutate(CuGS = cumsum(GS)) %>%
+  mutate(CuCG = cumsum(CG)) %>%
+  mutate(CuSHO = cumsum(SHO)) %>%
+  mutate(CuSV = cumsum(SV)) %>%
+  mutate(CuIP = cumsum(IP)) %>%
+  mutate(CuH = cumsum(H)) %>%
+  mutate(CuER = cumsum(ER)) %>%
+  mutate(CuHR = cumsum(HR)) %>%
+  mutate(CuBB = cumsum(BB)) %>%
+  mutate(CuSO = cumsum(SO)) %>%
+  na.omit(Age) %>%
+  arrange(desc(CuIP)) -> StartData_Pitchers
+
+Starters <- StartData_Pitchers %>%
+  filter(CareerGS > CareerSV)
+Closers <- StartData_Pitchers %>%
+  filter(CareerGS < CareerSV)
+HOFStarters <- Starters %>%
+  filter(CareerGS >= 500)
+HOFClosers <- Closers %>%
+  filter(CareerSV >= 300)
+HOFClosers <- HOFClosers[!(HOFClosers$Player == "Aroldis Chapman" | HOFClosers$Player == "Craig Kimbrel" | HOFClosers$Player == "Kenley Jansen"),]
+
+Bye_Bye_2009_Pitchers <- StartData_Pitchers[!(StartData_Pitchers$yearID < 2010),]
+Bye_Bye_2009_Pitchers %>%
+  arrange(yearID, descreasing = FALSE) %>%
+  mutate(CIP2010 = cumsum(IP)) -> Bye_Again_2009_Pitchers
+Almost_There_Pitchers <- Bye_Again_2009_Pitchers[!(Bye_Again_2009_Pitchers$CuIP > Bye_Again_2009_Pitchers$CIP2010),]
+Young_Pitchers <- subset(Almost_There_Pitchers, select = -c(CIP2010))
+
+YoungStarters <- Young_Pitchers %>%
+  filter(CareerGS > CareerSV) %>% arrange(desc(CuW))
+YoungClosers <- Young_Pitchers %>%
+  filter(CareerGS < CareerSV)
+
+FullData_Pitchers <- rbind(HOFStarters, HOFClosers, YoungStarters, YoungClosers)
+```
+
+
+
+
+```{r}
+library(shiny)
+
+# Define UI 
+ui <- fluidPage(
+  #uiOutput("hitters"),
+  textOutput("Title"),
+  navbarPage("Select Hitters or Pitchers",
+                   tabPanel("Hitters", uiOutput('hitters')),
+                   tabPanel("Pitchers", uiOutput("pitchers"))
+                   ),
+  textOutput("Subscript")
+)
+
+# Define server logic 
+server <- function(input, output) {
+    output$hitters <- renderUI({
+      tagList(
+        selectInput(
+          inputId = "pid",
+          label = "Historical Player 1",
+          choices = HOFData$Player,
+          selected = "Babe Ruth",
+          multiple = FALSE,
+          selectize = TRUE,
+          width = NULL,
+          size = NULL
+        ),
+        selectInput(
+          inputId = "pid2",
+          label = "Historical Player 2",
+          choices = HOFData$Player,
+          selected = "Barry Bonds",
+          multiple = FALSE,
+          selectize = TRUE,
+          width = NULL,
+          size = NULL
+        ),
+        selectInput(
+          inputId = "mod1",
+          label = "Modern Player 1",
+          choices = Young_Hitters$Player,
+          selected = "Bryce Harper",
+          multiple = FALSE,
+          selectize = TRUE,
+          width = NULL,
+          size = NULL
+        ),
+        selectInput(
+          inputId = "mod2",
+          label = "Modern Player 2",
+          choices = Young_Hitters$Player,
+          selected = "Mike Trout",
+          multiple = FALSE,
+          selectize = TRUE,
+          width = NULL,
+          size = NULL
+        ),
+        selectInput(
+          inputId = "stat",
+          label = "Select Stat to Visualize For Hitters",
+          choices = colnames(FullData)[20:31],
+          selected = "CHR",
+          multiple = FALSE,
+          selectize = TRUE,
+          width = NULL,
+          size = NULL
+        ),
+        
+        plotOutput("trajplot"),
+        #actionButton(inputId = "rand", label = "Show me random players!"),
+        dataTableOutput("total1")
+      )
+    })
+    output$pitchers <- renderUI({
+       tagList(
+        selectInput(
+          inputId = "pitpid",
+          label = "Historical Starter #1",
+          choices = HOFStarters$Player,
+          selected = "Nolan Ryan",
+          multiple = FALSE,
+          selectize = TRUE,
+          width = NULL,
+          size = NULL
+        ),
+        selectInput(
+          inputId = "pidpit2",
+          label = "Historical Starter #2",
+          choices = HOFStarters$Player,
+          selected = "Cy Young",
+          multiple = FALSE,
+          selectize = TRUE,
+          width = NULL,
+          size = NULL
+        ),
+        selectInput(
+          inputId = "modpit1",
+          label = "Modern Player 1",
+          choices = YoungStarters$Player,
+          selected = "Madison Bumgarner",
+          multiple = FALSE,
+          selectize = TRUE,
+          width = NULL,
+          size = NULL
+        ),
+        selectInput(
+          inputId = "modpit2",
+          label = "Modern Player 2",
+          choices = YoungStarters$Player,
+          selected = "Clayton Kershaw",
+          multiple = FALSE,
+          selectize = TRUE,
+          width = NULL,
+          size = NULL
+        ),
+        selectInput(
+          inputId = "statp",
+          label = "Select Stat to Visualize For Pitcher",
+          choices = colnames(HOFStarters)[22:34],
+          selected = "CHR",
+          multiple = FALSE,
+          selectize = TRUE,
+          width = NULL,
+          size = NULL
+        ),
+        
+        plotOutput("trajplotpit"),
+        #actionButton(inputId = "rand", label = "Show me random players!"),
+        dataTableOutput("total2")
+      )
+    })
+
+    output$trajplot <- renderPlot({
+      playerNames <- c(input$pid, input$pid2, input$mod1, input$mod2)
+      ggplot(FullData %>% filter(Player %in% playerNames), aes_string("Age",input$stat, colour = "Player")) + geom_line() + ggtitle("Trajectory Chart")
+    })
+    output$trajplotpit <- renderPlot({
+      playerNames <- c(input$pidpit, input$pidpit2, input$modpit1, input$modpit2)
+      ggplot(FullData_Pitchers %>% filter(Player %in% playerNames), aes_string("Age",input$statp, colour = "Player")) + geom_line() + ggtitle("Trajectory Chart")
+    })
+    
+    output$total1 <- renderDataTable({
+    FullData %>% group_by(Player) %>% summarise(Player = min(Player), AB = sum(AB), R = sum(R), H = sum(H), X1B = sum(X1B), X2B = sum(X2B), X3B = sum(X3B), HR = sum(HR), RBI = sum(RBI), SB = sum(SB), SO = sum(SO), HBP = sum(HBP), BB= sum(BB)) %>% filter(Player %in% c(input$pid, input$pid2, input$mod1, input$mod2)) %>% select(Player, AB, R, H, X1B, X2B, X3B, HR, RBI, SB, SO, HBP, BB)
+    })
+    output$total2 <- renderDataTable({
+    FullData_Pitchers %>% group_by(Player) %>% summarise(Player = min(Player), W = sum(W), L= sum(L), G = sum(G), GS = sum(GS), CG = sum(CG), SHO = sum(SHO), SV = sum(SV), IP = sum(IP), H = sum(H), ER = sum(ER), HR = sum(HR), BB = sum(BB), SO = sum(SO)) %>% filter(Player %in% c(input$pitpid, input$pitpid2, input$pitmod1, input$pitmod2)) %>% select(Player, W, L, G, GS, CG, SHO, SV, IP, H, ER, HR, BB, SO)
+    })
+    
+    output$Title <- renderText({ "This is our Shiny App that compares career trajectories of pitchers and hitters across time and in modern eras. Select up to 4 hitters or 4 pitchers and compare their cumulative counting statistics plotted relative to their respective ages.  Enjoy!" })
+    output$Subscript <- renderText({"This Shiny App was created by Austin Shwatal and Danny Thompson for Stat 430 at the University of Illinois, 11/11/2022" })
+    
+    
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+
