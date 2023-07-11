@@ -788,7 +788,7 @@ server <- function(input, output) {
    
     Pitcher_Filtered() |>
       filter(pitcher_name == input$pitcher_select) |>
-      filter(!is.na(obp)) |>
+      filter(!is.na(on_base)) |>
       select(pitcher_name, on_base, `Pitches Thrown`) |>
       summarise(.by = "Pitches Thrown", `On Base %` = mean(on_base)) |>
       ggplot(aes(x = `Pitches Thrown`, y = `On Base %`)) +
