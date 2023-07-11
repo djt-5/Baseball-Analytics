@@ -1,0 +1,512 @@
+Belli_Data$Bunting <- ifelse(Belli_Data$description %in% bunting, "Bunt", "No Bunt")
+}
+#Save Bellinger's Data to Machine ####
+write_csv(Belli_Data, "Belli_Data.csv")
+Belli_Data <- read_csv("Belli_Data.csv")
+View(Belli_Data)
+-17/24
+{
+#Hard Hit
+Belli_Data$description <- ifelse(Belli_Data$description == "hit_into_play" &
+grepl("bunt", Belli_Data$des),
+"bunt_into_play", Belli_Data$description)
+Belli_Data$hard_hit <- ifelse(Belli_Data$launch_speed >= 95 &
+Belli_Data$description != "bunt_into_play", 1, 0)
+#K-Zone Width
+Belli_Data$width <- "X"
+Belli_Data$width <- ifelse(Belli_Data$plate_x < -0.7083335,
+"Left Out Of Zone", Belli_Data$width)
+Belli_Data$width <- ifelse(Belli_Data$plate_x >= -0.7083335 &
+Belli_Data$plate_x < -0.2361112,
+"Left", Belli_Data$width)
+Belli_Data$width <- ifelse(Belli_Data$plate_x >= -0.2361112 &
+Belli_Data$plate_x < 0.2361112,
+"Middle", Belli_Data$width)
+Belli_Data$width <- ifelse(Belli_Data$plate_x >= 0.2361112 &
+Belli_Data$plate_x <= 0.7083335,
+"Right", Belli_Data$width)
+Belli_Data$width <- ifelse(Belli_Data$plate_x > 0.7083335,
+"Right Out Of Zone", Belli_Data$width)
+#K-Zone Height
+Belli_Data$height <- "Z"
+Belli_Data$height <- ifelse(Belli_Data$plate_z < 1.65,
+"Low Out Of Zone", Belli_Data$height)
+Belli_Data$height <- ifelse(Belli_Data$plate_z >= 1.65 &
+Belli_Data$plate_z < 2.316667,
+"Low", Belli_Data$height)
+Belli_Data$height <- ifelse(Belli_Data$plate_z >= 2.316667 &
+Belli_Data$plate_z < 2.983334,
+"Middle", Belli_Data$height)
+Belli_Data$height <- ifelse(Belli_Data$plate_z >= 2.983334 &
+Belli_Data$plate_z <= 3.65,
+"High", Belli_Data$height)
+Belli_Data$height <- ifelse(Belli_Data$plate_z > 3.65,
+"High Out Of Zone", Belli_Data$height)
+#Whiff
+swinging <- c("hit_into_play", "foul", "swinging_strike",
+"swinging_strike_blocked", "foul_tip","missed_bunt")
+Belli_Data$whiff <- ifelse(Belli_Data$description %in% swinging, 0, NA)
+Belli_Data$whiff <- ifelse(Belli_Data$description == "swinging_strike",
+1, Belli_Data$whiff)
+#Chase
+Belli_Data$called_strike <- ifelse(Belli_Data$description == "called_strike",1,0)
+not_swinging <- c("ball", "called_strike", "blocked_ball")
+Belli_Data$chase <- ifelse((grepl("Out Of Zone", Belli_Data$height) |
+grepl("Out Of Zone", Belli_Data$width) &
+Belli_Data$description %in% swinging),1, 0)
+Belli_Data$chase <- ifelse(Belli_Data$description %in% not_swinging,
+NA, Belli_Data$chase)
+#Adjust Base State ####
+Belli_Data$Bases <- NA
+Belli_Data$Bases <- ifelse(is.na(Belli_Data$on_1b) & is.na(Belli_Data$on_2b)
+& is.na(Belli_Data$on_3b), "No Runners", Belli_Data$Bases)
+Belli_Data$Bases <- ifelse(!is.na(Belli_Data$on_1b) & is.na(Belli_Data$on_2b)
+& is.na(Belli_Data$on_3b), "1st", Belli_Data$Bases)
+Belli_Data$Bases <- ifelse(is.na(Belli_Data$on_1b) & !is.na(Belli_Data$on_2b)
+& is.na(Belli_Data$on_3b), "2nd", Belli_Data$Bases)
+Belli_Data$Bases <- ifelse(is.na(Belli_Data$on_1b) & is.na(Belli_Data$on_2b)
+& !is.na(Belli_Data$on_3b), "3rd", Belli_Data$Bases)
+Belli_Data$Bases <- ifelse(!is.na(Belli_Data$on_1b) & !is.na(Belli_Data$on_2b)
+& is.na(Belli_Data$on_3b), "1st & 2nd", Belli_Data$Bases)
+Belli_Data$Bases <- ifelse(!is.na(Belli_Data$on_1b) & is.na(Belli_Data$on_2b)
+& !is.na(Belli_Data$on_3b), "1st & 3rd", Belli_Data$Bases)
+Belli_Data$Bases <- ifelse(is.na(Belli_Data$on_1b) & !is.na(Belli_Data$on_2b)
+& !is.na(Belli_Data$on_3b), "2nd & 3rd", Belli_Data$Bases)
+Belli_Data$Bases <- ifelse(!is.na(Belli_Data$on_1b) & !is.na(Belli_Data$on_2b)
+& !is.na(Belli_Data$on_3b), "Bases Loaded", Belli_Data$Bases)
+#Add Bunting Feature ####
+bunting <- c("bunt_into_play", "missed_bunt","foul_bunt")
+Belli_Data$Bunting <- ifelse(Belli_Data$description %in% bunting, "Bunt", "No Bunt")
+}
+#Save Bellinger's Data to Machine ####
+write_csv(Belli_Data, "Belli_Data.csv")
+Belli_Data <- read_csv("Belli_Data.csv")
+View(Belli_Data)
+shinyApp(ui, server)
+library(shiny)
+library(shinythemes)
+library(vroom)
+library(kableExtra)
+library(tidyverse)
+Belli_Data <- read_csv("Belli_Data.csv")
+ui <- fluidPage(
+titlePanel("Cody Bellinger's Hitting Profile"),
+sidebarLayout(
+sidebarPanel(
+selectInput("input1", "Year", choices = 2017:2023),
+radioButtons("input2", "Base State",
+choices = as.vector(unique(Belli_Data$Bases))),
+radioButtons("input3", "Outs When Up", choices = 0:2),
+radioButtons("input4","Pitcher Throws", choices = c("R", "L")),
+selectInput("input5", "Pitch Type",
+choices = as.vector(unique(Belli_Data$pitch_name))),
+sliderInput("input6", "Pitch Velocity", min = 65, max = 105, value = 90),
+sliderInput("input7", "Bunting Y/N", choices = c("No Bunt", "Bunt"))
+),
+mainPanel(
+plotOutput('kplot'),
+dataTableOutput('datatable')
+)
+)
+)
+ui <- fluidPage(
+titlePanel("Cody Bellinger's Hitting Profile"),
+sidebarLayout(
+sidebarPanel(
+selectInput("input1", "Year", choices = 2017:2023),
+radioButtons("input2", "Base State",
+choices = as.vector(unique(Belli_Data$Bases))),
+radioButtons("input3", "Outs When Up", choices = 0:2),
+radioButtons("input4","Pitcher Throws", choices = c("R", "L")),
+selectInput("input5", "Pitch Type",
+choices = as.vector(unique(Belli_Data$pitch_name))),
+sliderInput("input6", "Pitch Velocity", min = 65, max = 105, value = 90),
+selectInput("input7", "Bunting Y/N", choices = c("No Bunt", "Bunt"))
+),
+mainPanel(
+plotOutput('kplot'),
+dataTableOutput('datatable')
+)
+)
+)
+server <- function(input, output) {
+re_plot <- reactive({
+Belli_Data |>
+filter(!is.na(delta_run_exp)) |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+ggplot(aes(x = plate_x, y = plate_z, color = delta_run_exp)) +
+geom_point() +
+theme_bw() +
+geom_segment(aes(x = -0.7083335, y = 1.65, xend = 0.7083335, yend = 1.65)) +
+geom_segment(aes(x = -0.7083335, y = 3.65, xend = 0.7083335, yend = 3.65)) +
+geom_segment(aes(x = -0.7083335, y = 1.65, xend = -0.7083335, yend = 3.65)) +
+geom_segment(aes(x = 0.7083335, y = 1.65, xend = 0.7083335, yend = 3.65)) +
+geom_segment(aes(x = -0.7083335, y = 2.316667, xend = 0.7083335, yend = 2.316667)) +
+geom_segment(aes(x = -0.7083335, y = 2.983334, xend = 0.7083335, yend = 2.983334)) +
+geom_segment(aes(x = -0.2361112, y = 1.65, xend = -0.2361112, yend = 3.65)) +
+geom_segment(aes(x = 0.2361112, y = 1.65, xend = 0.2361112, yend = 3.65))
+})
+Swing <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(!is.na(chase) & !is.na(whiff)) |>
+summarise(`Chase %` = mean(chase), `Whiff %` = mean(whiff))
+In_Play <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(description == "hit_into_play") |>
+filter()
+summarise(`Hard Hit %` = mean(hard_hit),
+`Median Exit Velo ` = med(launch_speed),
+`Median Launch Angle` = med(launch_angle))
+Take <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(plate_z >= 1.65 & plate_z <= 3.65 &
+plate_x >= (-17/24) & plate_x <= (17/24)) |>
+summarise(`Taken For Strike %` = mean(called_strike))
+Run_Value <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+summarise(`Net Run Value` = mean(delta_run_exp))
+Data_Table <- cbind(Run_Value, Swing, In_Play, Take)
+re_table <- reactive({
+Data_Table
+})
+output$kplot <- renderPlot(re_plot)
+output$datatable <- renderDataTable(Data_Table)
+}
+server <- function(input, output) {
+re_plot <- reactive({
+Belli_Data |>
+filter(!is.na(delta_run_exp)) |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+ggplot(aes(x = plate_x, y = plate_z, color = delta_run_exp)) +
+geom_point() +
+theme_bw() +
+geom_segment(aes(x = -0.7083335, y = 1.65, xend = 0.7083335, yend = 1.65)) +
+geom_segment(aes(x = -0.7083335, y = 3.65, xend = 0.7083335, yend = 3.65)) +
+geom_segment(aes(x = -0.7083335, y = 1.65, xend = -0.7083335, yend = 3.65)) +
+geom_segment(aes(x = 0.7083335, y = 1.65, xend = 0.7083335, yend = 3.65)) +
+geom_segment(aes(x = -0.7083335, y = 2.316667, xend = 0.7083335, yend = 2.316667)) +
+geom_segment(aes(x = -0.7083335, y = 2.983334, xend = 0.7083335, yend = 2.983334)) +
+geom_segment(aes(x = -0.2361112, y = 1.65, xend = -0.2361112, yend = 3.65)) +
+geom_segment(aes(x = 0.2361112, y = 1.65, xend = 0.2361112, yend = 3.65))
+})
+Swing <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(!is.na(chase) & !is.na(whiff)) |>
+summarise(`Chase %` = mean(chase), `Whiff %` = mean(whiff))
+In_Play <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(description == "hit_into_play") |>
+filter()
+summarise(`Hard Hit %` = mean(hard_hit),
+`Median Exit Velo ` = med(launch_speed),
+`Median Launch Angle` = med(launch_angle))
+Take <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(plate_z >= 1.65 & plate_z <= 3.65 &
+plate_x >= (-17/24) & plate_x <= (17/24)) |>
+summarise(`Taken For Strike %` = mean(called_strike))
+Run_Value <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+summarise(`Net Run Value` = mean(delta_run_exp))
+Data_Table <- cbind(Run_Value, Swing, In_Play, Take)
+re_table <- reactive({
+Data_Table
+})
+output$kplot <- renderPlot(re_plot)
+output$datatable <- renderDataTable(Data_Table)
+}
+shinyApp(ui, server)
+ui <- fluidPage(
+titlePanel("Cody Bellinger's Hitting Profile"),
+sidebarLayout(
+sidebarPanel(
+selectInput("input1", "Year", choices = 2017:2023),
+radioButtons("input2", "Base State",
+choices = as.vector(unique(Belli_Data$Bases))),
+radioButtons("input3", "Outs When Up", choices = 0:2),
+radioButtons("input4","Pitcher Throws", choices = c("R", "L")),
+selectInput("input5", "Pitch Type",
+choices = as.vector(unique(Belli_Data$pitch_name))),
+sliderInput("input6", "Pitch Velocity", min = 65, max = 105, value = 90),
+selectInput("input7", "Bunting Y/N", choices = c("No Bunt", "Bunt"))
+),
+mainPanel(
+plotOutput('kplot'),
+dataTableOutput('datatable')
+)
+)
+)
+server <- function(input, output) {
+re_plot <- reactive({
+Belli_Data |>
+filter(!is.na(delta_run_exp)) |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+ggplot(aes(x = plate_x, y = plate_z, color = delta_run_exp)) +
+geom_point() +
+theme_bw() +
+geom_segment(aes(x = -0.7083335, y = 1.65, xend = 0.7083335, yend = 1.65)) +
+geom_segment(aes(x = -0.7083335, y = 3.65, xend = 0.7083335, yend = 3.65)) +
+geom_segment(aes(x = -0.7083335, y = 1.65, xend = -0.7083335, yend = 3.65)) +
+geom_segment(aes(x = 0.7083335, y = 1.65, xend = 0.7083335, yend = 3.65)) +
+geom_segment(aes(x = -0.7083335, y = 2.316667, xend = 0.7083335, yend = 2.316667)) +
+geom_segment(aes(x = -0.7083335, y = 2.983334, xend = 0.7083335, yend = 2.983334)) +
+geom_segment(aes(x = -0.2361112, y = 1.65, xend = -0.2361112, yend = 3.65)) +
+geom_segment(aes(x = 0.2361112, y = 1.65, xend = 0.2361112, yend = 3.65))
+})
+Swing <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(!is.na(chase) & !is.na(whiff)) |>
+summarise(`Chase %` = mean(chase), `Whiff %` = mean(whiff))
+In_Play <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(description == "hit_into_play") |>
+filter()
+summarise(`Hard Hit %` = mean(hard_hit),
+`Median Exit Velo ` = med(launch_speed),
+`Median Launch Angle` = med(launch_angle))
+Take <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(plate_z >= 1.65 & plate_z <= 3.65 &
+plate_x >= (-17/24) & plate_x <= (17/24)) |>
+summarise(`Taken For Strike %` = mean(called_strike))
+Run_Value <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+summarise(`Net Run Value` = mean(delta_run_exp))
+Data_Table <- cbind(Run_Value, Swing, In_Play, Take)
+re_table <- reactive({
+Data_Table
+})
+output$kplot <- renderPlot({re_plot()})
+output$datatable <- renderDataTable({Data_Table()})
+}
+shinyApp(ui, server)
+ui <- fluidPage(
+titlePanel("Cody Bellinger's Hitting Profile"),
+sidebarLayout(
+sidebarPanel(
+selectInput("input1", "Year", choices = 2017:2023),
+radioButtons("input2", "Base State",
+choices = as.vector(unique(Belli_Data$Bases))),
+radioButtons("input3", "Outs When Up", choices = 0:2),
+radioButtons("input4","Pitcher Throws", choices = c("R", "L")),
+selectInput("input5", "Pitch Type",
+choices = as.vector(unique(Belli_Data$pitch_name))),
+sliderInput("input6", "Pitch Velocity", min = 65, max = 105, value = 90),
+selectInput("input7", "Bunting Y/N", choices = c("No Bunt", "Bunt")),
+actionButton("submit", "Explore")
+),
+mainPanel(
+plotOutput('kplot'),
+dataTableOutput('datatable')
+)
+)
+)
+server <- function(input, output) {
+observeEvent(input$submit, {
+K_Plot <- Belli_Data |>
+filter(!is.na(delta_run_exp)) |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+ggplot(aes(x = plate_x, y = plate_z, color = delta_run_exp)) +
+geom_point() +
+theme_bw() +
+geom_segment(aes(x = -0.7083335, y = 1.65, xend = 0.7083335, yend = 1.65)) +
+geom_segment(aes(x = -0.7083335, y = 3.65, xend = 0.7083335, yend = 3.65)) +
+geom_segment(aes(x = -0.7083335, y = 1.65, xend = -0.7083335, yend = 3.65)) +
+geom_segment(aes(x = 0.7083335, y = 1.65, xend = 0.7083335, yend = 3.65)) +
+geom_segment(aes(x = -0.7083335, y = 2.316667, xend = 0.7083335, yend = 2.316667)) +
+geom_segment(aes(x = -0.7083335, y = 2.983334, xend = 0.7083335, yend = 2.983334)) +
+geom_segment(aes(x = -0.2361112, y = 1.65, xend = -0.2361112, yend = 3.65)) +
+geom_segment(aes(x = 0.2361112, y = 1.65, xend = 0.2361112, yend = 3.65))
+Swing <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(!is.na(chase) & !is.na(whiff)) |>
+summarise(`Chase %` = mean(chase), `Whiff %` = mean(whiff))
+In_Play <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(description == "hit_into_play") |>
+filter()
+summarise(`Hard Hit %` = mean(hard_hit),
+`Median Exit Velo ` = med(launch_speed),
+`Median Launch Angle` = med(launch_angle))
+Take <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+filter(plate_z >= 1.65 & plate_z <= 3.65 &
+plate_x >= (-17/24) & plate_x <= (17/24)) |>
+summarise(`Taken For Strike %` = mean(called_strike))
+Run_Value <- Belli_Data |>
+filter(game_year %in% input$input1) |>
+filter(Bases %in% input$input2) |>
+filter(outs_when_up %in% input$input3) |>
+filter(p_throws %in% input$input4) |>
+filter(pitch_type %in% input$input5) |>
+filter(release_speed <= input$input6[2]
+& release_speed >= input$input6[1]) |>
+filter(Bunting %in% input$input7) |>
+summarise(`Net Run Value` = mean(delta_run_exp))
+Data_Table <- cbind(Run_Value, Swing, In_Play, Take)
+output$kplot <- renderPlot(K_Plot)
+output$datatable <- renderDataTable(Data_Table)
+})
+}
+shinyApp(ui, server)
+runApp('Belli_App.R')
+library(shiny); runApp('Belli_App.R')
+runApp('Belli_App.R')
+runApp('Belli_App.R')
+runApp('Belli_App.R')
+library(shiny)
+library(shinythemes)
+library(vroom)
+library(kableExtra)
+library(tidyverse)
+Belli_Data <- read_csv("Belli_Data.csv")
+a <- 5
+b <- 15
+a:b
+library(shiny)
+library(shinythemes)
+library(vroom)
+library(kableExtra)
+library(tidyverse)
+library(shiny); runApp('Belli_App.R')
+runApp('Belli_App.R')
+runApp('Belli_App.R')
+runApp('Belli_App.R')
+runApp('Belli_App.R')
+runApp('Belli_App.R')
+runApp('Belli_App.R')
+runApp('Belli_App.R')
+library(shiny); runApp('Belli_App.R')
