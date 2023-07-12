@@ -1,3 +1,0 @@
-statcast2015 <- read_csv("statcast2015.csv")
-
-View(statcast2015)
