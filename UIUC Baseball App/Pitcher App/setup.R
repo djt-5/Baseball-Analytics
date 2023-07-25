@@ -6,29 +6,27 @@
 
 # Game Data collected via FileZilla, is also included in this repo
 # Host name is ftp.trackmanbaseball.com
-# Username is U Illinois
-# Password is TzdsYUKUf9
+# Username = U Illinois
+# Password = TzdsYUKUf9
 # In the V3 folder is the 2023 folder. Download it. Set it as working directory.
+# Practice Data posted on Github. Add all CSVs into the file.
 # In console or script type the following:
 
-## files  <- list.files(pattern = 'IllinoisField')
-## tables <- lapply(files, read.csv, header = TRUE)
-## GameData <- do.call(rbind , tables)
-
-# Practice Data posted on Github. Bind all files using method above. 
-# Name it "Data.csv"
-# Get rid of duplicate rows
+## library(tidyverse)
+## file_list <- list.files()[-30]
+## list_of_dfs <- lapply(file_list, function(x) {
+##   read_csv(x, col_types = cols(Date = col_character(), 
+##                                UTCDate = col_character()))
+## })
+## Data <- bind_rows(list_of_dfs)
 ## Data <- Data[!duplicated(Data), ]
-# Done :)
+## write_csv(Data, "Data.csv")
+## Done :)
 
 {
   library(tidyverse)
   
   Data <- read_csv("Data.csv")
-  
-  # There could be duplicate rows. Let's delete them
-  
-  #Data <- Data[!duplicated(Data), ]
   
   # Change headers to statcast names for familiarity purposes
   
