@@ -983,7 +983,7 @@ server <- function(input, output) {
     Pitcher_Filtered() |>
       filter(pitcher_name == input$pitcher_select) |>
       filter(!is.na(launch_speed)) |>
-      select(pitcher_name, linedrive, Pitches_Thrown) |>
+      select(pitcher_name, LineDrive, Pitches_Thrown) |>
       summarise(.by = "Pitches_Thrown", `Line Drive %` = mean(LineDrive)) |>
       ggplot(aes(x = Pitches_Thrown, y = `Line Drive %`)) +
       geom_point() +
