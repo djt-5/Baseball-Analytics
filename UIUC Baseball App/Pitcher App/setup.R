@@ -107,8 +107,8 @@
                           NA,
                           Data$FoulBall)
   
-  Data$Chase <- ifelse(Data$plate_x < -17/24 | Data$plate_x > 17/24 | 
-                         Data$plate_z < 1.65 | Data$plate_z > 3.65, 0, NA)
+  Data$Chase <- ifelse(Data$plate_x < -0.8308333 | Data$plate_x > 0.8308333 | 
+                         Data$plate_z < 1.5275 | Data$plate_z > 3.7725, 0, NA)
   Data$Chase <- ifelse(Data$description == "FoulBall" | 
                          !is.na(Data$launch_speed) |
                          Data$description == "StrikeSwinging", 1, Data$Chase)
@@ -152,33 +152,33 @@
   # Strike Zone Grouping
   
   Data$width <- "X"
-  Data$width <- ifelse(Data$plate_x < -17/24, 
+  Data$width <- ifelse(Data$plate_x < -0.8308333, 
                        "Left Out Of Zone", Data$width)
-  Data$width <- ifelse(Data$plate_x >= -17/24 & 
+  Data$width <- ifelse(Data$plate_x >= -0.8308333 & 
                          Data$plate_x < -0.2361112, 
                        "Left", Data$width)
   Data$width <- ifelse(Data$plate_x >= -0.2361112 & 
                          Data$plate_x < 0.2361112, 
                        "Middle", Data$width)
   Data$width <- ifelse(Data$plate_x >= 0.2361112 & 
-                         Data$plate_x <= 17/24, 
+                         Data$plate_x <= 0.8308333, 
                        "Right", Data$width)
-  Data$width <- ifelse(Data$plate_x > 17/24, 
+  Data$width <- ifelse(Data$plate_x > 0.8308333, 
                        "Right Out Of Zone", Data$width)
   
   Data$height <- "Z"
-  Data$height <- ifelse(Data$plate_z < 1.65, 
+  Data$height <- ifelse(Data$plate_z < 1.5275, 
                         "Low Out Of Zone", Data$height)
-  Data$height <- ifelse(Data$plate_z >= 1.65 &
+  Data$height <- ifelse(Data$plate_z >= 1.5275 &
                           Data$plate_z < 2.316667,
                         "Low", Data$height)
   Data$height <- ifelse(Data$plate_z >= 2.316667 &
                           Data$plate_z < 2.983334,
                         "Middle", Data$height)
   Data$height <- ifelse(Data$plate_z >= 2.983334 &
-                          Data$plate_z <= 3.65,
+                          Data$plate_z <= 3.7725,
                         "High", Data$height)
-  Data$height <- ifelse(Data$plate_z > 3.65,
+  Data$height <- ifelse(Data$plate_z > 3.7725,
                         "High Out Of Zone", Data$height)
   
   #Convert Release Stats from Feet to Inches

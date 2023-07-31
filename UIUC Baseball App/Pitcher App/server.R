@@ -47,7 +47,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_obp <- renderPlot({pitch_kzone_obp()}, height = 500)
@@ -77,7 +77,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_slg <- renderPlot({pitch_kzone_slg()}, height = 500)
@@ -106,7 +106,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_freq <- renderPlot({pitch_kzone_freq()}, height = 500)
@@ -136,7 +136,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_exit_velo <- renderPlot({pitch_kzone_exit_velo()}, height = 500)
@@ -166,7 +166,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_angle <- renderPlot({pitch_kzone_angle()}, height = 500)
@@ -196,7 +196,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_hard_hit <- renderPlot({pitch_kzone_hard_hit()}, height = 500)
@@ -227,7 +227,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_groundball <- renderPlot({pitch_kzone_groundball()}, height = 500)
@@ -258,7 +258,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_linedrive <- renderPlot({pitch_kzone_linedrive()}, height = 500)
@@ -289,7 +289,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_flyball <- renderPlot({pitch_kzone_flyball()}, height = 500)
@@ -321,7 +321,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_whiff <- renderPlot({pitch_kzone_whiff()}, height = 500)
@@ -339,8 +339,8 @@ server <- function(input, output) {
       filter(VertBreak >= input$kzone_break_y[1] &
                VertBreak <= input$kzone_break_y[2]) |>
       filter(!is.na(Chase)) |>
-      filter(plate_x < -17/24 | plate_x > 17/24 | 
-               plate_z < 1.65 | plate_z > 3.65) |>
+      filter(plate_x < -0.8308333 | plate_x > 0.8308333 | 
+               plate_z < 1.5275 | plate_z > 3.7725) |>
       summarize(.by = c("width","height"), 
                 `Chase %` = mean(Chase)) |>
       ggplot(aes(x = width, y = height, fill = `Chase %`)) +
@@ -353,7 +353,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_chase <- renderPlot({pitch_kzone_chase()}, height = 500)
@@ -382,7 +382,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_taken <- renderPlot({pitch_kzone_taken()}, height = 500)
@@ -412,7 +412,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_pull <- renderPlot({pitch_kzone_pull()}, height = 500)
@@ -442,7 +442,7 @@ server <- function(input, output) {
       scale_colour_manual(values=c("white"="white")) +
       geom_rect(aes(xmin = 1.5, xmax = 4.5, ymin = 1.5, ymax = 4.5),
                 fill = "transparent", color = "red", linewidth = 2.5) +
-      theme(aspect.ratio = 1.4)
+      theme(aspect.ratio = 1.4) 
   })
   
   output$pitch_kzone_foul <- renderPlot({pitch_kzone_foul()}, height = 500)
@@ -933,8 +933,8 @@ server <- function(input, output) {
     Pitcher_Filtered() |>
       filter(pitcher_name == input$pitcher_select) |>
       filter(!is.na(Chase)) |>
-      filter(plate_x < -17/24 | plate_x > 17/24 | 
-               plate_z < 1.65 | plate_z > 3.65) |>
+      filter(plate_x < -0.8308333 | plate_x > 0.8308333 | 
+               plate_z < 1.5275 | plate_z > 3.7725) |>
       select(pitcher_name, Chase, Pitches_Thrown) |>
       summarise(.by = "Pitches_Thrown", `Chase %` = mean(Chase)) |>
       ggplot(aes(x = Pitches_Thrown, y = `Chase %`)) +
@@ -1120,8 +1120,8 @@ server <- function(input, output) {
       summarise(.by = "pitch_name", `Foul Ball %` = mean(FoulBall))
     
     Strike_Looking <- Pitcher_Data |>
-      filter(plate_z > 1.65 & plate_z < 3.65 & plate_x > -17/24 & 
-               plate_x < 17/24) |>
+      filter(plate_z > 1.5275 & plate_z < 3.7725 & plate_x > -0.8308333 & 
+               plate_x < 0.8308333) |>
       summarise(.by = "pitch_name", `Strike Looking %` = mean(Taken))
     
     Exit_Velo <- Pitcher_Data |>
