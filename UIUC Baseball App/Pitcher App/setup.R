@@ -79,8 +79,8 @@
   # Percentage stats
   
   Data$Swing <- ifelse(!is.na(Data$launch_speed) | 
-                          Data$description == "StrikeSwinging" |
-                          Data$description == "FoulBall", 1, 0)
+                         Data$description == "StrikeSwinging" |
+                         Data$description == "FoulBall", 1, 0)
   
   Data$Strike <- ifelse(Data$description != "BallCalled" & 
                           Data$description != "HitByPitch", 1, 0)
@@ -107,11 +107,13 @@
                           NA,
                           Data$FoulBall)
   
-  Data$Chase <- ifelse(Data$plate_x < -0.8308333 | Data$plate_x > 0.8308333 | 
-                         Data$plate_z < 1.5275 | Data$plate_z > 3.7725, 0, NA)
-  Data$Chase <- ifelse(Data$description == "FoulBall" | 
-                         !is.na(Data$launch_speed) |
-                         Data$description == "StrikeSwinging", 1, Data$Chase)
+  Data$Chase <- ifelse((Data$plate_x < -0.8308333 | Data$plate_x > 0.8308333 | 
+                          Data$plate_z < 1.5275 | Data$plate_z > 3.7725) &
+                         Data$Swing == 1, 1, NA)
+  
+  Data$Chase <- ifelse((Data$plate_x < -0.8308333 | Data$plate_x > 0.8308333 | 
+                          Data$plate_z < 1.5275 | Data$plate_z > 3.7725) &
+                         Data$Swing == 0, 0, Data$Chase)
   
   Data$Whiff <- ifelse(Data$Swing == 0, NA, 0)
   Data$Whiff <- ifelse(Data$Swing == 1, 0, Data$Whiff)
@@ -135,9 +137,12 @@
                            Data$events == "Triple" | Data$events == "Home Run" |
                            Data$events == "Walk" | Data$description == "HitByPitch", 
                          1, 
-                         0)
-  Data$on_base <- ifelse(Data$events == "Undefined" & Data$description != "HitByPitch",
-                         NA,
+                         NA)
+  Data$on_base <- ifelse(Data$events == "Out" |
+                           Data$events == "Strikeout" |
+                           Data$events == "Error" |
+                           Data$events == "FieldersChoice",
+                         0,
                          Data$on_base)
   
   Data$slugging <- ifelse(Data$events == "Single", 1, 0)
@@ -145,8 +150,9 @@
   Data$slugging <- ifelse(Data$events == "Triple", 3, Data$slugging)
   Data$slugging <- ifelse(Data$events == "HomeRun", 4, Data$slugging)
   
-  Data$slugging <- ifelse(is.na(Data$launch_speed) | Data$events == "Sacrifice",
-                          NA,
+  Data$slugging <- ifelse(Data$events == "Undefined" | 
+                            Data$events == "Walk" |
+                            Data$events == "Sacrifice", NA,
                           Data$slugging)
   
   # Strike Zone Grouping

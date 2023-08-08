@@ -1177,6 +1177,11 @@ server <- function(input, output) {
   lm_variables <- colnames(Pitcher_Data)[c(29:33,35:46,58:60,62,79,188)]
   glm_variables <- colnames(Pitcher_Data)[c(168:179)]
   
+  Filtered_Names <- reactive({
+    Batter_Filtered() |>
+      filter(batter_name == input$batter_select)
+  })
+  
   fo_lm <- reactive({
     as.formula(reformulate(input$SelectX_LM, as.character(input$SelectY_LM)))
   })
@@ -1186,11 +1191,11 @@ server <- function(input, output) {
   })
   
   Linear_Model <- reactive({
-    lm(fo_lm(), data = Pitcher_Filtered(), na.action = na.omit)
+    lm(fo_lm(), data = Filtered_Names(), na.action = na.omit)
   })
   
   Generalized_Linear_Model <- reactive({
-    lm(fo_glm(), data = Pitcher_Filtered(), na.action = na.omit)
+    lm(fo_glm(), data = Filtered_Names(), na.action = na.omit)
   })
   
   output$LM <- renderPrint(summary(Linear_Model()))
