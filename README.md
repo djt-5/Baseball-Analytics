@@ -1,5 +1,5 @@
 # Welcome
-This repository includes projects I have worked on for both the Illini Baseball team as well as curious MLB statitical work, including
+This repository includes projects I have worked on for both the Illini Baseball team, MLB statitical work, and stats related material including
 
 **UIUC Baseball Shiny Apps**
 * Is used by the UIUC baseball team to write scouting reports
