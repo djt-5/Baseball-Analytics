@@ -1,0 +1,160 @@
+---
+title: "Base Runners Need to Tag Up More"
+author: "Danny Thompson"
+date: "`r Sys.Date()`"
+output: html_document
+---
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+library(tidyverse)
+Data <- read_csv("Data.csv")
+```
+
+### The most important tag-up in Chicago Cubs history
+
+In Game 7 of the 2016 World Series, the Chicago Cubs started the 10th inning with a leadoff single by Kyle Schwarber, who despite collecting 3 hits on the night, was immediately taken out in favor of a much faster pinch runner, Albert Almora Jr. Kris Bryant, the next batter, hit a dangerously deep fly ball caught by the center fielder Rajai Davis 5 feet short of the fence. Off the bat, the ball looked like it definitely had a chance to at least hit the wall for extra bases, but despite its look, Albert Almora Jr tagged up on the fly ball, making it safely to 2nd base.
+
+Commenting on the play that was widely regarded as a genius move by Almora Jr, FOX commentator (and HOF pitcher) John Smoltz took a stance that piqued my interest. Smoltz said that "somebody else with a little less experience would think of rounding 2nd and being prepared to score... getting an extra base is *more important* than being able to potentially score if the ball is hit off the wall". 
+
+Was Smoltz right? Well, duh. The ball was caught. And the open base led to an intentional walk and an RBI double scoring Almora Jr. But is what Smoltz said universal? If Almora Jr tagged and the ball is dropped, he would only end up at 3rd instead of potentially scoring. In that case, tagging would have harmed the Cubs.
+
+### So... when should a runner tag up?
+
+I've gathered Statcast data from the 2015 season all the way up to now. With it, I took every fly ball hit in the field of play (sorry, no dingers) with a runner on first and/or second, and less than 2 outs. For this I am ignoring third base as those runners naturally tag up on almost every fly ball hit. It should be known I am also ignoring plays with errors and walk offs as they complicate the ability to predict outcomes with accuracy.
+
+I then built a model for each base occupied, and calculated the probability that a runner *would* have been safe given they tag up on a flyout, using the field coordinates of where the ball lands. 
+
+```{r, echo = FALSE}
+Data |>
+  filter(!is.na(prob_sac_safe_second)) |>
+  filter(2.5*(hc_x - 128)^2 + (hc_y - 270)^2 >= 22500) |>
+  ggplot(aes(x = hc_x, y = -hc_y, color = prob_sac_safe_second)) +
+  geom_curve(x = 33, xend = 223, y = -100, yend = -100,
+             curvature = -0.65, colour = "black") +
+  geom_segment(x = 128, xend = 33, y = -208, yend = -100, colour = "black") +
+  geom_segment(x = 128, xend = 223, y = -208, yend = -100, colour = "black") +
+  geom_curve(x = 83, xend = 173, y = -155, yend = -156, 
+             curvature = -0.65, linetype = "dotted", colour = "black") +
+  scale_x_continuous(NULL, limits = c(25, 225)) +
+  scale_y_continuous(NULL, limits = c(-225, -25)) +
+  coord_fixed() +
+  geom_point() +
+  theme_bw() +
+  ggtitle("Probability of being safe at 2nd on a tag-up from 1st")
+
+Data |>
+  filter(!is.na(prob_sac_safe_third)) |>
+  filter(2.5*(hc_x - 128)^2 + (hc_y - 270)^2 >= 22500) |>
+  ggplot(aes(x = hc_x, y = -hc_y, color = prob_sac_safe_third)) +
+  geom_curve(x = 33, xend = 223, y = -100, yend = -100,
+             curvature = -0.65, colour = "black") +
+  geom_segment(x = 128, xend = 33, y = -208, yend = -100, colour = "black") +
+  geom_segment(x = 128, xend = 223, y = -208, yend = -100, colour = "black") +
+  geom_curve(x = 83, xend = 173, y = -155, yend = -156, 
+             curvature = -0.65, linetype = "dotted", colour = "black") +
+  scale_x_continuous(NULL, limits = c(25, 225)) +
+  scale_y_continuous(NULL, limits = c(-225, -25)) +
+  coord_fixed() +
+  geom_point() +
+  theme_bw() +
+  ggtitle("Probability of being safe at 3rd on a tag-up from 2nd")
+  
+```
+
+Though it should be noted that this model is naive to how fast the runner is, it's clear to see that the further a ball is hit the more likely the runner is to be safe on a tag-up, which is obvious. And when tagging to third the spray angle becomes significant as a right fielder has to make a longer throw than a left fielder.
+
+So, when the probability of being safe is >0.5, the runner should have tagged up, right? Well, it's actually not *nearly* as simple as that.
+
+### Tagging and Run Expectancy
+
+First, I'll explain what run expectancy is. There are 24 different possible *base/out states* in baseball. 3 bases, 3 outs, 2 possibilities per base. Ex: runners on 1st and 3rd with 1 out, bases loaded 2 out, etc. For each base out state, there is an average amount of runs scored in an inning *after* that particular state. This is known as the run expectancy. 
+
+Here is the run expectancy matrix for the 2022 MLB season (source:https://www.pitcherlist.com/adjusting-for-the-current-run-expectancy-matrix/)
+
+```{r, echo = FALSE}
+rnames <- c("000", "100", "010", "001", "110", "101", "011", "111")
+cnames <- c(0,1,2)
+
+matrix_data <- c(0.476, 0.254, 0.097,
+                 0.865, 0.508, 0.205,
+                 1.073, 0.667, 0.308,
+                 1.272, 0.974, 0.377,
+                 1.435, 0.902, 0.440,
+                 1.753, 1.147, 0.500,
+                 2.005, 1.390, 0.548,
+                 2.367, 1.508, 0.767)
+
+mat1 <- matrix(matrix_data, nrow = 8, ncol = 3, byrow = TRUE,
+               dimnames = list(rnames, cnames))
+mat1
+```
+The columns are the outs and the rows are the base states, where "100" is runner on first, no runner on 2nd, no runner on 3rd and "011" is no runner on first, and runners on 2nd and 3rd. Delta Run Expectancy is how the batter changes the run expectancy in their at bat. Positive being good, negative being bad.With the best case and worst case scenarios of going for it on a fly ball, there will be a base/out state for each that has its own delta run expectancy. Only when you have a predicted gain in delta run expectancy (compared to staying put) is when you should go. The formula for that is *(Chance of Being Safe) x (Delta Run Expectancy Safe) + (Chance of Being Out) x (Delta Run Expectancy Out)* and when it is greater than the actual delta run expectancy, a runner should go.
+
+A big problem is that in these situations, when the odds are in the runner's favor, they only go for it 28.27% of the time. Why is that? For one thing, they do err on the side of caution and reduce their aggressiveness to 17.66% of the time when the odds are not in their favor. But the big reason why runners don't tag more is because they gamble on the bases.
+```{r, echo = FALSE, include=FALSE}
+Data |> filter(!is.na(tag_att)) |>
+  filter(tag_runs_added > 0) |>
+  summarise(go_for = mean(tag_att))
+
+Data |> filter(!is.na(tag_att)) |>
+  filter(tag_runs_added < 0) |>
+  summarise(go_for = mean(tag_att))
+```
+
+### Tagging on Base Hits
+
+Smoltz made the point that your worst case scenario of getting an extra base is more important than scoring on a hit. I worked with the data to calculate the delta run expectancies of tagging on base hits. It came with a few assumptions. The first is that it assumes that the base runners move as many bases as the batter does, no more, no less. The second is it assumes there are no errors and nobody gets an unearned base or slides off the bag. When it is a hit, tagging hurts the team's delta run expectancy by -0.100 on average. 
+
+```{r, echo = FALSE, include=FALSE}
+Data |>
+  filter(events == "single" | events == "double" | events == "triple") |>
+  summarise(smoltz = mean(tag_runs_added))
+```
+
+### Balancing it Out
+
+The batting average on fly balls in the yard in these situations is 0.119. This is low, mostly because line drives are not included and the well hit fly balls leave the yard. In total, runners only tag up on 26.22 % of fly outs. They gamble 73.78% of the time on what only has an 11.9% chance of happening.
+
+In 2023, using the included data, these are the expected amount of runs a team's offense is potentially missing out on by not only not tagging on *every* flyball, but it even includes runners going for it *100%* of the time, even on completely unlikely chances of reaching base safely. Yet still, all these numbers are positive.
+
+```{r, echo=FALSE, include=FALSE}
+table(Data$events)
+(2254 + 2277 + 289) / nrow(Data)
+```
+
+```{r, echo = FALSE}
+df <- Data |>
+  filter(game_year == 2023) |>
+  summarise(.by = "batting_team", `Potential Added Runs on Tag` = sum(tag_runs_added)) |>
+  rename(Team = batting_team) |>
+  arrange(`Potential Added Runs on Tag`)
+print.data.frame(df)
+```
+
+```{r, echo = FALSE, include = FALSE}
+Data |>
+  filter(!is.na(tag_att)) |>
+  summarise(go_for = mean(tag_att))
+
+Data |> filter(game_date == "2016-11-02")
+```
+
+When the result is a flyout, tagging up will add runs even including tagging up on low probability fly balls. This is not to say runners should tag up on every single fly ball. When they land for hits, they tend to be pretty convincing in which case it's up to the batter to use his own eyes and guess. For show, here's a graph on the expected batting average of the ball in play vs the runs added via tagging up.
+
+```{r, echo = FALSE}
+Data |>
+  filter(!is.na(estimated_ba_using_speedangle)) |>
+  filter(!is.na(tag_runs_added)) |>
+  ggplot(aes(x = tag_runs_added, y = estimated_ba_using_speedangle)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  theme_bw()
+```
+
+It shows an inverse relationship, which means don't tag up too much. Know when that ball is coming down.
+
+### Conclusion
+
+Knowing whether or not it's a good idea to tag on a fly ball is easier than many runners are making it to be. If you think you can get an extra base on a flyout that's 88.1% likely to happen, go for it. While Kris Bryant's fly ball had a 40% chance of landing as a hit, it had a 60% chance of not. Almora Jr had an 89.83% chance of being safe at 2nd, and yet John Smoltz praised Almora Jr for a high percentage play, because runners aren't doing this enough. Smoltz was right, the extra base is more important.
+
+
