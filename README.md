@@ -1,5 +1,5 @@
 # Welcome
-This repository includes projects I have worked on for both the Illini Baseball team, MLB statitical work, and stats related material including
+This repository includes projects I have worked on for both the Illini Baseball team and MLB statitical work.
 
 **UIUC Baseball Shiny Apps**
 * Is used by the UIUC baseball team to write scouting reports
@@ -11,9 +11,3 @@ This repository includes projects I have worked on for both the Illini Baseball 
 
 **UIUC Groundball Percentage**
 * Uses Trackman data to find the best combinations of certain variables for the pitcher to roll a ground ball
-
-**Quality At Bat %**
-* A report which defines a "Quality At Bat" & uses Statcast data to figure out if having a QAB is one of the more relevant statistics in baseball
-
-**Stock Market API Shiny App**
-* A college project Shiny App which uses an API to look at Fortune 500 companies & graph their trends (minimums, maximums, open, close, & trading volume) over the last 100 days
