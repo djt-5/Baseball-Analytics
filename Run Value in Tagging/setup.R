@@ -83,7 +83,10 @@
            inning_topbot, hc_x, hc_y, hit_distance_sc, game_pk, bat_score,
            post_bat_score, delta_run_exp, at_bat_number, pitch_number, 
            base_out_state, new_state, scenario, spray_angle, 
-           estimated_ba_using_speedangle) 
+           estimated_ba_using_speedangle) |>
+    mutate(dist_from_2b = sqrt((hc_x - 125.42)^2 + (hc_y - 147.87)^2)) |>
+    mutate(dist_from_3b = sqrt((hc_x - 100.22)^2 + (hc_y - 173.07)^2)) 
+    
   
   Data$events <- ifelse(grepl("double play", Data$des), "double_play",
                         Data$events)
@@ -508,22 +511,32 @@
   
   # Modeling to determine likelihood of safety based on hit location
   
-  #Model_1_Data <- Data |>
-  #  filter(!is.na(sac_safe_second))
-  #Model_1 <- lm(sac_safe_second ~ hit_distance_sc, data = Model_1_Data)
-  #summary(Model_1)
+  Model_1_Data <- Data |>
+    filter(!is.na(sac_safe_second)) |>
+    filter(is.na(sac_safe_third)) 
+  Model_1 <- lm(sac_safe_second ~ 0 + dist_from_2b, data = Model_1_Data)
+  summary(Model_1)
   
   Data$prob_sac_safe_second <- ifelse(!is.na(Data$tag_att) & 
                                         (Data$base_out_state == "1 0 0 0" |
                                            Data$base_out_state == "1 0 0 1" |
                                            Data$base_out_state == "1 1 0 0" |
                                            Data$base_out_state == "1 1 0 1"),
-                                      0.055315 + (0.002242*Data$hit_distance_sc), 
-                                      NA)
+                                      0.0084356*Data$dist_from_2b, NA)
+  
+  Data$prob_sac_safe_second <- ifelse(Data$dist_from_2b > 118.2761,
+                                      1, Data$prob_sac_safe_second)
+  
+  Data$prob_sac_safe_second <- ifelse(Data$prob_sac_safe_second > 1,
+                                      1, Data$prob_sac_safe_second)
+  
+  Data$prob_sac_safe_second <- ifelse(Data$dist_from_2b < 41.76717, 
+                                      0, Data$prob_sac_safe_second)
   
   Model_2_Data <- Data |>
-    filter(!is.na(sac_safe_third))
-  Model_2 <- lm(sac_safe_third ~ hit_distance_sc + spray_angle, data = Model_2_Data)
+    filter(!is.na(sac_safe_third)) |>
+    filter(is.na(sac_safe_second))
+  Model_2 <- lm(sac_safe_third ~ 0 + dist_from_3b, data = Model_2_Data)
   summary(Model_2)
   
   Data$prob_sac_safe_third <- ifelse(!is.na(Data$tag_att) & 
@@ -531,8 +544,16 @@
                                           Data$base_out_state == "0 1 0 1" |
                                           Data$base_out_state == "1 1 0 0" |
                                           Data$base_out_state == "1 1 0 1"),
-                                     6.315e-01 + (9.584e-04*Data$hit_distance_sc) + 
-                                        (7.086e-02*Data$spray_angle), NA)
+                                     7.831e-03*Data$dist_from_3b, NA)
+  
+  Data$prob_sac_safe_third <- ifelse(Data$dist_from_3b > 144.4003,
+                                      1, Data$prob_sac_safe_third)
+  
+  Data$prob_sac_safe_third <- ifelse(Data$prob_sac_safe_third > 1,
+                                      1, Data$prob_sac_safe_third)
+  
+  Data$prob_sac_safe_third <- ifelse(Data$dist_from_3b < 74.7931,
+                                     0, Data$prob_sac_safe_third)
   
   # Calculate tag dre for flyout probabilities
   
