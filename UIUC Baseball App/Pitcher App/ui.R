@@ -1,6 +1,8 @@
 library(tidyverse)
 library(shiny)
 library(shinydashboard)
+library(collapse)
+
 
 Pitcher_Data <- read_csv("Pitcher_Data.csv")
 lm_variables <- colnames(Pitcher_Data)[c(29:33,35:46,58:60,62,79,188)]
@@ -95,6 +97,7 @@ ui <- dashboardPage(skin = "yellow",
               tabBox(
                 title = "Pitch Sequencing",
                 id = "pitch_seq", height = "800px", width = "1000px",
+                tabPanel("Frequency", plotOutput('seq_freq')),
                 tabPanel("Whiff", plotOutput('seq_whiff')),
                 tabPanel("Chase", plotOutput('seq_chase')),
                 tabPanel("Foul Ball", plotOutput('seq_foul')),

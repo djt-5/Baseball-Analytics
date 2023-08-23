@@ -90,7 +90,7 @@ Model_2_Data <- Data |>
 
 -   I created separate data frames filtering when runners are out, and calculated the minimum and maximum distance for each base tagging. If any fly ball was below this minimum, it's probability was assigned to be 0. If any distance was above the maximum, I assigned it to be 1.
 
--   Check it all out on my Github: <https://github.com/djt-5/Public-Projects/tree/main/Run%20Value%20in%20Tagging>
+-   Check it all out on my Github: <https://github.com/djt-5/Baseball-Projects/tree/main/Run%20Value%20in%20Tagging>
 
 ### Tagging and Run Expectancy
 

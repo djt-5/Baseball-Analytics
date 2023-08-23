@@ -653,6 +653,31 @@ server <- function(input, output) {
       filter(!is.na(prev_pitch)) 
   })
   
+  seq_freq <- reactive({
+    
+    df <- Seq_Filtered() |>
+      filter(pitcher_name == input$pitcher_select) |>
+      summarise(.by = c("prev_pitch", "count"), 
+                most_frequent = fmode(pitch_name)) 
+    
+    df2 <- df[!duplicated(df), ]
+    
+    df2 |>
+      ggplot(aes(x = count, y = prev_pitch, fill = most_frequent)) +
+      geom_tile() +
+      scale_fill_manual(values = c("Changeup" = "blue", "Curveball" = "yellow", 
+                                    "Sinker" = "pink", "Four-Seam" = "red",
+                                    "Slider" = "orange", "Splitter" = "green",
+                                    "Cutter" = "purple")) +
+      scale_x_discrete("Count", limits = unique(Pitcher_Data$count)) +
+      scale_y_discrete("Previous Pitch", limits = unique(Pitcher_Data$pitch_name)) +
+      ggtitle("Pitch Most Thrown in Situation") +
+      theme_bw()
+    
+  })
+  
+  output$seq_freq <- renderPlot({seq_freq()}, height = 700)
+  
   seq_whiff <- reactive({
     
     df <- Seq_Filtered() |>
@@ -673,6 +698,10 @@ server <- function(input, output) {
     df4 |>
       ggplot(aes(x = count, y = prev_pitch, fill = pitch_name)) +
       geom_tile() +
+      scale_fill_manual(values = c("Changeup" = "blue", "Curveball" = "yellow", 
+                                    "Sinker" = "pink", "Four-Seam" = "red",
+                                    "Slider" = "orange", "Splitter" = "green",
+                                    "Cutter" = "purple")) +
       geom_text(aes(label = round(`Whiff %`, digits = 3))) +
       scale_x_discrete("Count", limits = unique(Pitcher_Data$count)) +
       scale_y_discrete("Previous Pitch", limits = unique(Pitcher_Data$pitch_name)) +
@@ -703,6 +732,10 @@ server <- function(input, output) {
     df4 |>
       ggplot(aes(x = count, y = prev_pitch, fill = pitch_name)) +
       geom_tile() +
+      scale_fill_manual(values = c("Changeup" = "blue", "Curveball" = "yellow", 
+                                    "Sinker" = "pink", "Four-Seam" = "red",
+                                    "Slider" = "orange", "Splitter" = "green",
+                                    "Cutter" = "purple")) +
       geom_text(aes(label = round(`Chase %`, digits = 3))) +
       scale_x_discrete("Count", limits = unique(Pitcher_Data$count)) +
       scale_y_discrete("Previous Pitch", limits = unique(Pitcher_Data$pitch_name)) +
@@ -733,6 +766,10 @@ server <- function(input, output) {
     df4 |>
       ggplot(aes(x = count, y = prev_pitch, fill = pitch_name)) +
       geom_tile() +
+      scale_fill_manual(values = c("Changeup" = "blue", "Curveball" = "yellow", 
+                                    "Sinker" = "pink", "Four-Seam" = "red",
+                                    "Slider" = "orange", "Splitter" = "green",
+                                    "Cutter" = "purple")) +
       geom_text(aes(label = round(`Foul Ball %`, digits = 3))) +
       scale_x_discrete("Count", limits = unique(Pitcher_Data$count)) +
       scale_y_discrete("Previous Pitch", limits = unique(Pitcher_Data$pitch_name)) +
@@ -763,6 +800,10 @@ server <- function(input, output) {
     df4 |>
       ggplot(aes(x = count, y = prev_pitch, fill = pitch_name)) +
       geom_tile() +
+      scale_fill_manual(values = c("Changeup" = "blue", "Curveball" = "yellow", 
+                                    "Sinker" = "pink", "Four-Seam" = "red",
+                                    "Slider" = "orange", "Splitter" = "green",
+                                    "Cutter" = "purple")) +
       geom_text(aes(label = round(`Fly Ball %`, digits = 3))) +
       scale_x_discrete("Count", limits = unique(Pitcher_Data$count)) +
       scale_y_discrete("Previous Pitch", limits = unique(Pitcher_Data$pitch_name)) +
@@ -793,6 +834,10 @@ server <- function(input, output) {
     df4 |>
       ggplot(aes(x = count, y = prev_pitch, fill = pitch_name)) +
       geom_tile() +
+      scale_fill_manual(values = c("Changeup" = "blue", "Curveball" = "yellow", 
+                                    "Sinker" = "pink", "Four-Seam" = "red",
+                                    "Slider" = "orange", "Splitter" = "green",
+                                    "Cutter" = "purple")) +
       geom_text(aes(label = round(`Ground Ball %`, digits = 3))) +
       scale_x_discrete("Count", limits = unique(Pitcher_Data$count)) +
       scale_y_discrete("Previous Pitch", limits = unique(Pitcher_Data$pitch_name)) +
@@ -823,6 +868,10 @@ server <- function(input, output) {
     df4 |>
       ggplot(aes(x = count, y = prev_pitch, fill = pitch_name)) +
       geom_tile() +
+      scale_fill_manual(values = c("Changeup" = "blue", "Curveball" = "yellow", 
+                                    "Sinker" = "pink", "Four-Seam" = "red",
+                                    "Slider" = "orange", "Splitter" = "green",
+                                    "Cutter" = "purple")) +
       geom_text(aes(label = round(`Line Drive %`, digits = 3))) +
       scale_x_discrete("Count", limits = unique(Pitcher_Data$count)) +
       scale_y_discrete("Previous Pitch", limits = unique(Pitcher_Data$pitch_name)) +
@@ -853,6 +902,10 @@ server <- function(input, output) {
     df4 |>
       ggplot(aes(x = count, y = prev_pitch, fill = pitch_name)) +
       geom_tile() +
+      scale_fill_manual(values = c("Changeup" = "blue", "Curveball" = "yellow", 
+                                    "Sinker" = "pink", "Four-Seam" = "red",
+                                    "Slider" = "orange", "Splitter" = "green",
+                                    "Cutter" = "purple")) +
       geom_text(aes(label = round(`Hard Hit %`, digits = 3))) +
       scale_x_discrete("Count", limits = unique(Pitcher_Data$count)) +
       scale_y_discrete("Previous Pitch", limits = unique(Pitcher_Data$pitch_name)) +
