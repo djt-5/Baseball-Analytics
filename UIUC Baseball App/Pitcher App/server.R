@@ -1231,8 +1231,8 @@ server <- function(input, output) {
   glm_variables <- colnames(Pitcher_Data)[c(168:179)]
   
   Filtered_Names <- reactive({
-    Batter_Filtered() |>
-      filter(batter_name == input$batter_select)
+    Pitcher_Filtered() |>
+      filter(pitcher_name == input$pitcher_select)
   })
   
   fo_lm <- reactive({
