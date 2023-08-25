@@ -1,7 +1,7 @@
 ---
 title: "Base Runners Need to Tag Up More"
 author: "Danny Thompson"
-date: "`r Sys.Date()`"
+date: "8-21-2023"
 output: html_document
 ---
 
@@ -41,7 +41,8 @@ Data |>
   coord_fixed() +
   geom_point() +
   theme_bw() +
-  ggtitle("Probability of being safe at 2nd on a tag-up from 1st")
+  ggtitle("Probability of being safe at 2nd on a tag-up from 1st") +
+  theme(legend.title = element_blank())
 
 Data |>
   filter(!is.na(prob_sac_safe_third)) |>
@@ -58,8 +59,8 @@ Data |>
   coord_fixed() +
   geom_point() +
   theme_bw() +
-  ggtitle("Probability of being safe at 3rd on a tag-up from 2nd")
-  
+  ggtitle("Probability of being safe at 3rd on a tag-up from 2nd") +
+  theme(legend.title = element_blank())
 ```
 
 Though it should be noted that this model is naive to how fast the runner is, it's clear to see that the further a ball is hit from the base the more likely the runner is to be safe on a tag-up, which is obvious. And when tagging to third the spray angle becomes significant as a right fielder has to make a longer throw than a left fielder. So, when the probability of being safe is \>0.5, the runner should have tagged up, right? Well, it's actually not as simple as that.
@@ -189,7 +190,10 @@ Data |>
   ggplot(aes(x = tag_runs_added, y = estimated_ba_using_speedangle)) +
   geom_point() +
   geom_smooth(method="lm") +
-  theme_bw()
+  theme_bw() +
+  xlab("Tag Runs Added") +
+  ylab("Estimated Batting Average on Hit") +
+  theme(legend.title = element_blank())
 ```
 
 It shows an inverse relationship, which means don't tag up too much. Know when that ball is coming down.
