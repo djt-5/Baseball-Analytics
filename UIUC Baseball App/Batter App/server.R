@@ -881,7 +881,7 @@ server <- function(input, output) {
       left_join(Fly_Ball, by = "pitch_name") |>
       left_join(OBP, by = "pitch_name") |>
       left_join(SLG, by = "pitch_name") |>
-      arrange(desc(`Pitches Thrown`)) |>
+      arrange(desc(`Pitches Seen`)) |>
       rename(`Pitch Type` = "pitch_name") |>
       mutate_if(is.numeric, round, digits = 3)
     

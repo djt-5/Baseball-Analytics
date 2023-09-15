@@ -30,12 +30,12 @@ ui <- dashboardPage(skin = "yellow",
       selectInput("balls", "Balls", choices = c("All", 0:3)),
       selectInput("strikes", "Strikes", choices = c("All", 0:2)),
       sidebarMenu(
+        menuItem("Summary Table", tabName = "table", icon = icon("table")),
         menuItem("Strike Zone", tabName = "k_zone", icon = icon("th")),
         menuItem("Spray Chart", tabName = "spray", icon = icon("arrows-alt")),
         menuItem("Pitch Metrics", tabName = "pitch", icon = icon("baseball")),
         menuItem("Pitch Sequencing", tabName = "seq", icon = icon("arrow-right")),
         menuItem("Game Timeline", tabName = "timeline", icon = icon("clock")),
-        menuItem("Summary Table", tabName = "table", icon = icon("table")),
         menuItem("Regression Models", tabName = "models", icon = icon("computer"))
       )
     ),

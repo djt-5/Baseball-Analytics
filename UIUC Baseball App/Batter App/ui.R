@@ -32,11 +32,11 @@ ui <- dashboardPage(skin = "blue",
       selectInput("batter_side", "Batter Side",
                   choices = c("Both", "Left", "Right")),
       sidebarMenu(
+        menuItem("Summary Table", tabName = "table", icon = icon("table")),
         menuItem("Strike Zone", tabName = "k_zone", icon = icon("th")),
         menuItem("Spray Chart", tabName = "spray", icon = icon("arrows-alt")),
         menuItem("Pitch Guessing", tabName = "guess", icon = icon("arrow-right")),
         menuItem("Game Timeline", tabName = "timeline", icon = icon("clock")),
-        menuItem("Summary Table", tabName = "table", icon = icon("table")),
         menuItem("Regression Models", tabName = "models", icon = icon("computer"))
       )
     ),
