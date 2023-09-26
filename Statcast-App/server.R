@@ -79,6 +79,7 @@ server <- function(input, output) {
                pfx_z <= input$kzone_break_y[2]) |>
       filter(spin_eff >= input$kzone_spin_eff_slider[1] &
                spin_eff <= input$kzone_spin_eff_slider[2]) |>
+      filter(!is.na(delta_run_exp)) |>
       summarize(.by = c("width","height"), 
                 `Avg Run Value` = mean(delta_run_exp)) |>
       ggplot(aes(x = width, y = height, fill = `Avg Run Value`)) +

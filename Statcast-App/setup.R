@@ -1,4 +1,4 @@
-#Code to acquire 2023 Statcast data ####
+#code to acquire 2023 Statcast data ####
 {
   library(tidyverse)
   library(bbd)
@@ -14,7 +14,7 @@
 
 #Restart R 
 
-#Code to update 2023 Statcast data ####
+#code to update 2023 Statcast data ####
 {
   library(tidyverse)
   library(bbd)
@@ -33,11 +33,18 @@
 
 #Restart R
 
-#Setup Code####
+#Setup code####
 {
   library(tidyverse)
   
-  Data <- read_csv("statcast2023.csv")
+  Data <- read_csv("statcast2023.csv") 
+  
+  Data$pitcher_team <- ifelse(Data$inning_topbot == "Top", 
+                              Data$home_team,
+                              Data$away_team)
+  
+  Data <- Data |>
+    filter(pitcher_team == "CHC")
   
   # Percentage stats ####
   
@@ -162,7 +169,7 @@
   Data$height <- ifelse(Data$plate_z > Data$sz_top,
                         "High Out Of Zone", Data$height)
   
-  # Hit Coordinates ####
+  # Hit coordinates ####
   
   Data <- Data |>
     filter(pitch_name != "Other") |>
@@ -182,7 +189,6 @@
                               Data$away_team)
   
   Pitcher_Arrange <- Data |>
-    filter(pitcher_team == "CHC") |>
     arrange(pitcher_name, game_pk, pitch_number) |>
     mutate(Scenario = paste(pitcher_name, game_pk))
   
@@ -209,7 +215,7 @@
   
   Pitcher_Data <- bind_rows(Seq_List_2)
   
-  # DeterCHCing Spin Efficiency: http://baseball.physics.illinois.edu/trackman/SpinAxis.pdf ####
+  # DeterARIing Spin Efficiency: http://baseball.physics.illinois.edu/trackman/SpinAxis.pdf ####
   
   # Parameters: K = 1/2 * density of air * cross sectional area of ball / mass of ball
   K = 0.0053865
