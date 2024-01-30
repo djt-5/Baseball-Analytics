@@ -9,3 +9,5 @@ This is a web development app I wrote used by the UIUC Baseball analysts to aid 
 * A space to run linear and logistic models to measure covariates and performance
 
 The app has functionality to filter by pitch type, velocity, break, spin rate, exit velocity, and launch angle. 
+
+Try it out for yourself: https://danielthom18.shinyapps.io/pitcher_app/
