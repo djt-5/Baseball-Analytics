@@ -7,5 +7,6 @@ Tunneling an offspeed pitch with a fastball is an important factor in generating
 * Regression plots putting two predictor variables up against each other to check for collinearity
 * A summary table of each pitch type, its metrics, and its results
 * A data table of each individual pitch thrown with filtering capabilities of the predictor variables, showing which metrics are best for optimizing performance (release angle, release direction, spin rate, spin axis, velocity, etc)
+* Filtering capability for game date to contrast a struggling stretch from an optimal one
 
 Try it out for yourself: https://danielthom18.shinyapps.io/tunnel_app/
