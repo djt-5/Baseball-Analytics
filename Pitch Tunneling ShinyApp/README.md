@@ -1,8 +1,11 @@
-# The Importance of Tunneling Pitches
-The idea of tunneling pitches is that two different pitches fly down the same trajectory long enough to look nearly identical through the point when a hitter must decide whether, or not, to swing. If pitches thrown back to back travel down this same 'tunnel' long enough, a hitter won’t be able to tell them apart until it’s too late. 
+# Pitch Tunneling ShinyApp
+Tunneling an offspeed pitch with a fastball is an important factor in generating swings and misses. This app aims to visualize the factors that contributed to MLB pitchers' success with whiffs, chases, and groundballs in 2023 using
+* A strike zone visualizing where the pitches were thrown
+* Pitch metrics graphs visualizing release points, break, tunnel points, post tunnel break, velocity, spin, etc.
+* A heatmap showing how effective a pitcher is in whiffs, chases, and groundballs based on the fastball/secondary pitch combination
+* Regression plots showing the best quantities of a certain variable to aim for when improving performance
+* Regression plots putting two predictor variables up against each other to check for collinearity
+* A summary table of each pitch type, its metrics, and its results
+* A data table of each individual pitch thrown with filtering capabilities of the predictor variables, showing which metrics are best for optimizing performance (release angle, release direction, spin rate, spin axis, velocity, etc)
 
-My main goal was to figure out how important this effect is in determining swings & misses, chases, and groundballs to help pitchers better their arsenals. I took secondary pitches thrown after fastballs, calculated multiple tunnel effects, and ran the data through **Gradient Boosting ML algorithms** to measure the importance of each variable.
-
-Spoiler Alert: Pitch Tunneling matters when it comes to getting swings and misses.
-
-Chack out the Pitch Tunneling ShinyApp and my pitcher development reports to see how you can implement this research into your pitchers' development.
+Try it out for yourself: https://danielthom18.shinyapps.io/tunnel_app/
