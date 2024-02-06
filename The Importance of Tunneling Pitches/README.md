@@ -5,4 +5,4 @@ My main goal was to figure out how important this effect is in determining swing
 
 Spoiler Alert: Pitch Tunneling matters when it comes to getting swings and misses.
 
-Check out my [Pitch Development ShinyApp](https://danielthom18.shinyapps.io/mlb_pitch_development_app/) and my Pitcher Development Analyses to see how you can implement this research into your pitchers' development.
+Check out my [Pitch Development ShinyApp](https://danielthom18.shinyapps.io/mlb_pitch_development_app/) and my [Player Development Analyses](https://github.com/djt-5/Baseball-Analytics/tree/main/Player%20Development%20Analysis) to see how you can implement this research into your pitchers' development.
