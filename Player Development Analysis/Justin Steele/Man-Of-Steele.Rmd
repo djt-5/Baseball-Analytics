@@ -1,0 +1,121 @@
+---
+title: "How Justin Steele can become even more elite in 2024"
+author: "Danny Thompson"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In 2023 Justin Steele emerged as the superstar ace of the Chicago Cubs. He earned his first All-Star nod and finished 5th in NL Cy Young voting. On September 13th, he led the entire MLB in Earned Run Average, but ended the season on a dismal stretch of giving up 16 runs in just 14 and a third innings. However his overall numbers were strong: 16-5, 3.06 ERA, 3.02 FIP.
+
+Steele succeeds by generating weak contact and groundballs while avoiding walks. However over his final three games, he struck out hitters at a lesser rate and the balls he let in play started to do more damage. Overall he really only throws two pitches consistently: His Four-Seam Fastball and his Slider, which combine for 96.5% of all his pitches thrown. 
+
+Steele's Four-Seam Fastball is in the 95th percentile for Run-Value according to Statcast. This analysis will look just at the Sliders he throws after his Fastball, and seek to improve from its 2023 rank of just the 67th percentile in Run-Value.
+
+## Pitch Tunneling
+
+Pitch Tunneling is the idea that back to back pitches can look nearly identical to one another through the point that a hitter must decide whether or whether or not to swing (23 feet 8 inches in front of home plate). A Four-Seam Fastball and a Slider tunneling well means that the hitter will have a harder time determining one from another, and will be more likely to miss that pitch when sitting on the other. 
+
+[Insert Pitch Tunneling Image]
+
+With Machine Learning I've researched the importance of Pitch Tunneling when it comes to breaking balls and offspeed pitches thrown after fastballs and published it [here]. While the break of any pitch is important, my models showed that the tunnel difference is actually more important to getting swings and misses than the horizontal and vertical break in 77.4% of models ran. 
+
+## The Slider
+
+Steele's slider is in the 70th percentile for vertical drop, 90th percentile for horizontal run, and 90th percentile for spin rate, but this has overall led to a below average Whiff rate (his 31.4% to MLB's 33.6%). Steele is more of a weak contact pitcher than a swing and miss pitcher, which works great with his fastball, but it never hurts to put together a reliable swing and miss pitch, especially when he has the natural tools for it. His slider's Chase rate is three percentage points above league average (his 38.4% to MLB's 35.0%) but is also worth seeking improvement. 
+
+I'll break down the rest of article into four analyses, accounting for batter handedness (Right vs Left) and desired outcome (Whiff and Chase) for the Sliders thrown after his Four-Seam Fastball. They use my research from building Gradient Boosting Models that determine the importance of each variable, directing how I go about determining Steele's ideal targets. I also only use the web app I developed to look at this specific type of data from the 2023 season. You can use it yourself if you wish to make these types of analyses.
+
+## Whiffs on Sliders to Lefties
+
+The best counts for Steele to throw his slider after a fastball are 0-1 and 2-2. On 1-2, 1-1, and 3-2 he hasn't gotten any Whiffs at all on a combined 36 pitches. His most common count to throw it is 0-2 where it only has a 28.6 Whiff %, below his average.
+
+From all of my models, where the pitcher puts the pitch is the most important determinant of its success. As you can see here from a sample size of 110 pitches, low and away is Steele's best bet for success.
+
+[Insert Strike Zone 1]
+
+I filter the data from hereon out to be on the left side of the plate below the middle of the zone. The next important determinant for my model dealing with this specific combination is how far apart each pitch is at the plate.
+
+[Insert Plate Diff 1]
+
+Anything between 1 and 1.7 feet of separation from the fastball gives Steele the best proven chance for a Whiff, and so I filter the data further to account for that. The best area to place the prior fastball is high in the strike zone, which is good for a high spin rate heater to be. The next best determinant is the tunnel point difference. 
+
+[Insert Tunnel Diff 1]
+
+A tunnel difference between 1.2 and 1.8 feet has been best for Steele. At this point, I have only 14 pitches left so any further filtering is not going to say much. 7 of those 14 pitches resulted in Whiffs, 3 resulted in contact or a foul ball (when filtering for only positive vertical break and a horizontal break of more than 11 inches, it becomes 7 Whiffs out of 8 pitches). This is a very small sample size but with a Whiff rate of 70% it at least becomes worth exploring further for Steele to see how much locking in these ranges can improve his full season Whiff rate, even if it won't be 70%. 
+
+## Whiffs on Sliders to Righties
+
+The best count for Steele here are 0-2, with a 46.2% Whiff rate, more than double that to lefties. On 0-1, 1-2, and 2-2 he has thrown 57, 55, and 56 pitches respectively but none of these counts carry a Whiff rate over 26.3%. 
+
+Here's the determinant hierarchy I'm working with:
+
+[Insert Model-2 Image]
+
+The very best place for Steele to put his Slider in this situation is down and inside.
+
+[Insert Strike Zone 2] 
+
+Anything below the zone and to the catcher's left is what I filter by for the next determinant, the plate differential.
+
+[Insert Plate Diff 2]
+
+A plate difference over 1.7 seems to make a marginal improvement, with the ideal prior fastball being thrown up in the zone. The next determinants of the tunnel difference and break to tunnel ratio are tied, but because the difference at tunnel is largely reliant on the difference at plate, I filtered the break to tunnel ratio to be less than 2 and ended the filtering. 
+
+[Insert Break to Tunnel Ratio 2]
+
+This leaves 47 pitches, 10 swung on and 8 Whiffed on. The low swing rate is not ideal, but can be afforded on an 0-2 count and in Whiff or bust moments with runners on. The swing rate should increase the more this pitch is thrown.
+
+## Chases on Sliders to Lefties
+
+Steele's best counts for chases after a fastball are 1-1 and 2-2. 0-2 again has the low Chase rate, while the latter two are more chased than not. 
+
+My model's determinant hierarchy:
+
+[Insert Model-3 Image]
+
+Steele gets chases on lefties down and/or away and not too far off the plate, with the best prior fastball to be low/middle in the zone. This can be covered by filtering the vertical plate location between 0.5 and 2.5 feet.
+
+[Insert Strike Zone 3]
+
+Like the Whiffs, the plate differential matters, but keeping it minimal allows the tunnel effect to take place. Having a plate differential under 1.54 feet is best.
+
+[Insert Plate Diff 3]
+
+The model suggests horizontal break should be next, but when checking, Steele shows that his vertical break matters more in this sample. Anything under 1.25 inches of vertical break helps. 
+
+[Insert Break 3]
+
+This is an appropriate place to stop, as I'm left with 18 pitches outside of the zone and 16 of them chased. The tunnel effect was not used for this combination.
+
+## Chases on Sliders to Righties
+
+Steele's best counts for chases after a fastball are 0-1, 1-1, and 2-2, not too dissimilar to pitching to lefties. They all have a chase rate of at least 46.9%.
+
+My model's determinant hierarchy:
+
+[Insert Model-4 Image]
+
+Steele gets chases on lefties down and/or inside and not too far off the plate. This can be covered by filtering the vertical plate location between 0.75 and 2.5 feet and the horizontal location to be between -1.6 and 0.75.
+
+[Insert Strike Zone 4]
+
+Again, the plate differential is the next determinant, and having it under 2.1 is best, with the best prior fastball being mid/high in the zone or slightly above the zone.
+
+[Insert Plate Diff 4]
+
+Next up is both the horizontal and vertical break of the pitch. Less than 11.5 inches of horizontal break matters, with no clear vertical break indication.
+
+[Insert Break 4]
+
+Here I'm left with 11 pitches out of the zone and 10 of them chased. The tunnel difference made no impact from hereon out, so I leave it here. 
+
+## Summary
+
+Every pitch is thrown with intention. Does a pitcher want to roll a groundball? Get a swing and miss? Set up a batter for a chase? So having the same shape for every pitch type isn't the best idea. A pitcher should throw variations of his secondary pitches that best reach those specific outcomes, of which I've listed what works for Justin Steele. However building this off the fastball is crucial. Ironically Steele reached the listed targets a higher percent of the time during his rough last 3 games than before, but because his fastball had performed poorly and changed shape, the slider did not succeed off the same differences from before. Though Steele's fastball has been too good for too long to continue to lag, so he sets himself up for a great opportunity to master his slider in 2024.
+
+
+
