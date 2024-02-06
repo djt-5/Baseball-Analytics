@@ -5,4 +5,4 @@ This frustrated me to a great extent and motivated me to research if deciding to
 
 As it turns out, every team in 2023 would have scored more runs if they tagged on 100% of reasonably deep fly balls.
 
-Read the analysis here: https://medium.com/@danielthom18/base-runners-need-to-tag-up-from-1st-2nd-more-often-693f90a7659f
+[Read the Analysis Here](https://medium.com/@danielthom18/base-runners-need-to-tag-up-from-1st-2nd-more-often-693f90a7659f)
