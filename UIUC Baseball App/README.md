@@ -10,4 +10,3 @@ This is a web development app I wrote used by the UIUC Baseball analysts to aid 
 
 The app has functionality to filter by pitch type, velocity, break, spin rate, exit velocity, and launch angle. 
 
-[Try it Out For Yourself](https://danielthom18.shinyapps.io/pitcher_app/)
