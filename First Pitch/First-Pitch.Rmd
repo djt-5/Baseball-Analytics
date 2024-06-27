@@ -1,0 +1,166 @@
+---
+title: "You probably shouldn't be taking the first pitch"
+author: "Danny Thompson"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+In 2023, batters in the MLB took first pitches, which were in strike zone the zone, 52.8% of the time. This number actually drops to 49.84% when accounting for all pitches. When 68% of all first pitches are thrown in the strike zone, why do batters take the first pitch a little more than half the time?
+
+```{r, echo = FALSE}
+df <- read_csv("Data2023.csv") |>
+  select(pitcher_name, batter_name, events, description, balls, strikes, inning, game_pk,
+         sz_top, sz_bot, plate_x, plate_z, at_bat_number, pitch_number, delta_run_exp) |>
+  arrange(pitcher_name, batter_name, game_pk, inning, at_bat_number, pitch_number) |>
+  mutate(at_bat_id = paste(pitcher_name, batter_name, game_pk, inning, at_bat_number)) |>
+  #mutate(InZone = ifelse(plate_x < -0.8308333 - 0.25 | plate_x > 0.8308333 + 0.25 | 
+  #                         plate_z < sz_bot - 0.25 | 
+  #                         plate_z > sz_top + 0.25 , 0, 1)) |>
+  filter(balls == 0 & strikes == 0) |>
+  #filter(InZone == 1) |>
+  mutate(swing = ifelse(description == "called_strike", 0, NA)) |>
+  mutate(swing = ifelse(description %in% c("hit_into_play", "foul_tip", "swinging_strike",
+                                           "foul", "swinging_strike_blocked"), 1, swing)) |>
+  filter(!is.na(swing))
+
+1 - mean(df$swing)
+
+#Taking 52.8% of the time
+```
+
+```{r, echo = FALSE}
+Question2 <- read_csv("Question2.csv")
+
+1 - mean(Question2$InZone, na.rm = TRUE)
+
+#Only 32% of all first pitches are outside of the strike zone
+```
+
+A good reason is that they want to study the arm movement of the pitcher, as well as getting down his timing and tempo. But there is little to no evidence that supports the idea that taking the first pitch of the first at bat for a strike will help this batter the second or third time around facing the same pitcher. When a batter takes the first pitch he sees from the pitcher, his second at bat has an average stat line of .256/.318/.432 (batting average, on base percentage, slugging). When he swings at the first pitch he sees, the stat line averages .252/.314/.427. Though the .OPS is higher for taking, this is not a significant difference. The same is true for the third time around, where after taking that very first pitch of the first at bat, batters average .267/.329/.452 compared to .265/.324/.454. 
+
+```{r, echo = FALSE}
+Question1 <- read_csv("Question1.csv")
+
+#2nd at bats after first pitch first ab take
+#Statline of .256/.318/.432 with 0.017 Run Value
+take2 <- Question1 |>
+  filter(time_faced == 2) |>
+  filter(first_pitch_swing == 0) 
+mean(take2$babip_value, na.rm = TRUE)
+mean(take2$obp_value, na.rm = TRUE)
+mean(take2$slg_value, na.rm = TRUE)
+mean(take2$delta_run_exp, na.rm = TRUE)
+
+#2nd at bats after first pitch first ab swing
+#Statline of .252/.314/.427 with 0.017 Run Value
+swing2 <- Question1 |>
+  filter(time_faced == 2) |>
+  filter(first_pitch_swing == 1) 
+mean(swing2$babip_value, na.rm = TRUE)
+mean(swing2$obp_value, na.rm = TRUE)
+mean(swing2$slg_value, na.rm = TRUE)
+mean(swing2$delta_run_exp, na.rm = TRUE)
+
+#3rd at bats after first pitch first ab take
+#Statline of .267/.329/.452 with 0.025 Run Value
+take3 <- Question1 |>
+  filter(time_faced == 3) |>
+  filter(first_pitch_swing == 0)
+mean(take3$babip_value, na.rm = TRUE)
+mean(take3$obp_value, na.rm = TRUE)
+mean(take3$slg_value, na.rm = TRUE)
+mean(take3$delta_run_exp, na.rm = TRUE)
+
+#3rd at bats after first pitch first ab swing
+#Statline of .265/.324/.454 with 0.017 Run Value
+swing3 <- Question1 |>
+  filter(time_faced == 3) |>
+  filter(first_pitch_swing == 1)
+mean(swing3$babip_value, na.rm = TRUE)
+mean(swing3$obp_value, na.rm = TRUE)
+mean(swing3$slg_value, na.rm = TRUE)
+mean(swing3$delta_run_exp, na.rm = TRUE)
+```
+
+Batters may have their own personal preferences and habits, but on a large scale, there is no rule that says these habits will help them in the long term. So, can swinging at the first pitch strike you see be beneficial? The stats seem to think so. The stat line on an 0-0 count in 2023 was .348/.359/.595 compared to .321/.330/.517 on an 0-1 count. That's a .954 OPS dropping to an .847 OPS just by taking one pitch. 
+
+```{r, echo = FALSE}
+Question3 <- read_csv("Question3.csv")
+
+Zero_Zero <- Question3 |>
+  filter(balls == 0 & strikes == 0)
+
+mean(Zero_Zero$babip_value, na.rm = TRUE)
+mean(Zero_Zero$obp_value, na.rm = TRUE)
+mean(Zero_Zero$slg_value, na.rm = TRUE)
+mean(Zero_Zero$delta_run_exp, na.rm = TRUE)
+
+#Statline on 0-0 pitches: .348/.359/.595 with 0.071 Run Value
+
+Zero_One <- Question3 |>
+  filter(balls == 0 & strikes == 1)
+
+mean(Zero_One$babip_value, na.rm = TRUE)
+mean(Zero_One$obp_value, na.rm = TRUE)
+mean(Zero_One$slg_value, na.rm = TRUE)
+mean(Zero_One$delta_run_exp, na.rm = TRUE)
+
+#Statline on 0-1 pitches: .321/.330/.517 with 0.077 Run Value
+```
+
+Whether or not a batter swings at a first pitch also impacts the stat line for the rest of the at bat, whether or not the batter puts it in play on 0-0 or 1-1. When a batter swings at the first pitch, given it's a strike, his expected stat line is .264/.291/.443 which drops to .220/.268/.351 when he takes. 
+
+```{r, echo = FALSE}
+Question4 <- read_csv("Question4.csv")
+
+First_Pitch_Swing <- Question4 |>
+  filter(first_pitch_taken == 1)
+
+mean(First_Pitch_Swing$babip_value, na.rm = TRUE)
+mean(First_Pitch_Swing$obp_value, na.rm = TRUE)
+mean(First_Pitch_Swing$slg_value, na.rm = TRUE)
+mean(First_Pitch_Swing$delta_run_exp, na.rm = TRUE)
+
+#Statline for swinging first pitch: .264/.291/.443
+
+First_Pitch_Taken <- Question4 |>
+  filter(first_pitch_taken == 0)
+
+mean(First_Pitch_Taken$babip_value, na.rm = TRUE)
+mean(First_Pitch_Taken$obp_value, na.rm = TRUE)
+mean(First_Pitch_Taken$slg_value, na.rm = TRUE)
+mean(First_Pitch_Taken$delta_run_exp, na.rm = TRUE)
+
+#Statline for taking first pitch: .220/.268/.351
+```
+There also appears to be a positive correlation between swinging at first pitches and total run value for MLB teams in 2023.
+```{r}
+df2 <- read_csv("Data2023.csv") |>
+  mutate(InZone = ifelse(plate_x < -0.8308333 - 0.25 | plate_x > 0.8308333 + 0.25 | 
+                           plate_z < sz_bot - 0.25 | 
+                           plate_z > sz_top + 0.25 , 0, 1)) |>
+  mutate(swing = ifelse(description == "called_strike", 0, NA)) |>
+  mutate(swing = ifelse(description %in% c("hit_into_play", "foul_tip", "swinging_strike",
+                                           "foul", "swinging_strike_blocked"), 1, swing)) |>
+  mutate(count = paste(balls, "-", strikes)) |>
+  mutate(swing = ifelse(count != "0 - 0", NA, swing)) |>
+  mutate(swing = ifelse(InZone != 1, NA, swing)) |>
+  mutate(batter_team = ifelse(inning_topbot == "Top", away_team, home_team)) |>
+  summarise(.by = batter_team,
+            run_val = sum(delta_run_exp, na.rm = TRUE),
+            swing_pct = mean(swing, na.rm = TRUE))
+
+ggplot(df2, aes(x = swing_pct, y = run_val, label = batter_team)) +
+  geom_label() +
+  geom_smooth(method = "lm", se = FALSE) +
+  xlab("First Pitch Strike Swing %") +
+  ylab("Total Run Value") 
+```
+Getting fully set to swing at the first pitch makes sense for a hitter who wants to improve his overall stats, without having to worry about his performance the second and third time around, which these days isn't happening as much with starterd throwing fewer innings. It can let the pitcher know not to throw a cookie which can help the batter get ahead in the count and work more successful at bats.
+
+
