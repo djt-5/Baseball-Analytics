@@ -1,0 +1,1113 @@
+---
+title: "Morel"
+author: "Danny Thompson"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+Pre_Data <- read_csv("Data.csv")
+Players <- read_csv("Fast-Bats.csv")
+Data <- Pre_Data |>
+  filter(stand == "R") |>
+  filter(batter_name %in% unique(Players$name))
+rm(Players)
+
+Left = -8.5/12
+  Right = 8.5/12
+  Bottom = 18.29/12
+  Top = 44.08/12
+  Width = (Right - Left) / 3
+  Height = (Top - Bottom) / 3
+```
+
+#Morel's RE24 is POSITIVE on takes, NEGATIVE on swings, despite 2 strike status
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(!is.na(Swing)) |>
+  mutate(Swing = ifelse(Swing == 1, "Swing", "Take")) |>
+  mutate(strikes = ifelse(strikes < 2, "less than two", "two")) |>
+  summarise(.by = c(Swing, strikes),
+            RE24 = sum(delta_run_exp, na.rm = TRUE))
+```
+
+#Morel Swinging RE24 Against RHP Fastballs (<2 Strikes): Below Average
+```{r}
+Pre_Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(p_throws == "R") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Fastball", "Cutter", "Sinker")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #-0.0611
+
+Pre_Data |>
+  filter(stand == "R") |>
+  filter(p_throws == "R") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Fastball", "Cutter", "Sinker")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #-0.0227
+```
+
+#Morel Swinging RE24 Against RHP Breaking Balls (<2 Strikes): Above Average
+```{r}
+Pre_Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(p_throws == "R") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #0.029
+
+Pre_Data |>
+  filter(stand == "R") |>
+  filter(p_throws == "R") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #-0.019
+```
+
+
+#Morel Swinging RE24 Against RHP Offspeed (<2 Strikes): Below Average
+```{r}
+Pre_Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(p_throws == "R") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Changeup", "Splitter")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #-0.0829
+
+Pre_Data |>
+  filter(stand == "R") |>
+  filter(p_throws == "R") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Changeup", "Splitter")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #-0.018
+```
+#Morel Swinging RE24 Against LHP Fastballs (<2 Strikes): Below Average
+```{r}
+Pre_Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(p_throws == "L") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Fastball", "Cutter", "Sinker")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #-0.0628
+
+Pre_Data |>
+  filter(stand == "R") |>
+  filter(p_throws == "L") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Fastball", "Cutter", "Sinker")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #-0.017
+```
+
+#Morel Swinging RE24 Against LHP Breaking Balls (<2 Strikes): Above Average
+```{r}
+Pre_Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(p_throws == "L") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #0.036
+
+Pre_Data |>
+  filter(stand == "R") |>
+  filter(p_throws == "L") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #-0.007
+```
+
+#Morel Swinging RE24 Against LHP Offspeed (<2 Strikes): Below Average
+```{r}
+Pre_Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(p_throws == "L") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Changeup", "Splitter")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #-0.108
+
+Pre_Data |>
+  filter(stand == "R") |>
+  filter(p_throws == "L") |>
+  filter(strikes < 2) |>
+  filter(Swing == 1) |>
+  filter(pitch_name %in% c("Changeup", "Splitter")) |>
+  summarise(RE24 = mean(delta_run_exp, na.rm = TRUE)) #-0.0227
+```
+
+#RE24, Strike Zone for Fast Bats, RHP, Fastball (<2 strikes)
+
+```{r}
+Data |>
+  filter(!is.na(delta_run_exp)) |>
+  filter(Swing == 1) |>
+  filter(strikes < 2) |>
+  filter(p_throws == "R" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#Morel's Density Comparison RHP Fastball <2 strikes
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(p_throws == "R" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = Swing)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "Swing") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#The bottom left 4 are the best swinging spots in this cluster against RHP Fastballs <2 strikes. When swinging, the ideal target of swing length and bat speed is actually around where Morel swings. NO CHANGE IN SWING MECHANICS NEEDED!
+
+```{r}
+Data |>
+  filter(strikes < 2) |>
+  filter(plate_x >= Left & plate_x <= Right - Width &
+           plate_z >= Bottom & plate_z <= Top - Height) |>
+  filter(p_throws == "R" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(plate_x >= Left & plate_x <= Right - Width &
+           plate_z >= Bottom & plate_z <= Top - Height) |>
+  filter(p_throws == "R" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed)) +
+  geom_hex(bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1) +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#RE24, Strike Zone for Fast Bats, RHP, Breaking Ball (<2 strikes)
+
+```{r}
+Data |>
+  filter(!is.na(delta_run_exp)) |>
+  filter(Swing == 1) |>
+  filter(strikes < 2) |>
+  filter(p_throws == "R" & pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#Morel's Density Comparison RHP Breaking Ball <2 strikes
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(p_throws == "R" & pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = Swing)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "Swing") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+#The middle of the zone and slightly below middle/middle the best swinging spot in this cluster against RHP Breaking Balls <2 strikes. When swinging, the ideal target of swing length and bat speed is 75-85mph with 7-8 ft swing length. Morel's swing speed is ideal but his swing length is more around 8-8.8 feet in plurality. Swinging shorter can improve his already above average RE24 for this chunk.
+
+```{r}
+Data |>
+  filter(strikes < 2) |>
+  filter(plate_x >= Left + (Width/2) & plate_x <= Right - (Width/2) &
+           plate_z >= Bottom + (Height/2) & plate_z <= Top - Height) |>
+  filter(p_throws == "R" & pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(plate_x >= Left + (Width/2) & plate_x <= Right - (Width/2) &
+           plate_z >= Bottom + (Height/2) & plate_z <= Top - Height) |>
+  filter(p_throws == "R" & pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  ggplot(aes(x = swing_length, y = bat_speed)) +
+  geom_hex(bins = 5) +
+  scale_fill_distiller(palette = "RdBu", direction = -1) +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#RE24, Strike Zone for Fast Bats, RHP, Offspeed (<2 strikes)
+
+```{r}
+Data |>
+  filter(!is.na(delta_run_exp)) |>
+  filter(Swing == 1) |>
+  filter(strikes < 2) |>
+  filter(p_throws == "R" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#Morel's Density Comparison RHP Offspeed <2 strikes
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(p_throws == "R" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = Swing)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "Swing") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#The inner third of the plate above the bottom third is the best swinging spot in this cluster against RHP Breaking Balls <2 strikes. When swinging, the ideal target of swing length and bat speed is 75-82mph with 7.3-7.7 ft swing length. Most of Morel's swings in this sweet spot have the ideal swing speed but mostly swings between 8-9 feet in length, a foot above the recommendation. This can help his below average performance against RHP Breaking Balls.
+
+```{r}
+Data |>
+  filter(strikes < 2) |>
+  filter(plate_x >= -1 & plate_x <= Left + Width &
+           plate_z >= Bottom + Height & plate_z <= Top) |>
+  filter(p_throws == "R" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(plate_x >= -1 & plate_x <= Left + Width &
+           plate_z >= Bottom + Height & plate_z <= Top) |>
+  filter(p_throws == "R" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, color = "red", fill = "red")) +
+  geom_hex(bins = 5) +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#RE24, Strike Zone for Fast Bats, LHP, Fastball (<2 strikes)
+
+```{r}
+Data |>
+  filter(!is.na(delta_run_exp)) |>
+  filter(Swing == 1) |>
+  filter(strikes < 2) |>
+  filter(p_throws == "L" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#Morel's Density Comparison LHP Fastball <2 strikes
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(p_throws == "L" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = Swing)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "Swing") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#The upper part of the bottom third, all the way to the bottom of the top third, inside the strike zone, show to be the best places to swing. Morel does a great job of swinging middle/in, but doesn't swing enough low/in, middle, and middle away, and swings way too much on inside pitches, and low/away pitches. Dispensing the outliers, the best swing length consistently for this ideal location lies between 7-8 feet, at 73-80mph swinging. Five of Morel's 16 swings fall within this ideal range, stressing a need to hone in on this mechanical target on top of decision making.
+
+```{r}
+Data |>
+  filter(strikes < 2) |>
+  filter(plate_x >= Left & plate_x <= Right &
+           plate_z >= 1.7 & plate_z <= 3) |>
+  filter(p_throws == "L" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(plate_x >= Left & plate_x <= Right - Width &
+           plate_z >= Bottom & plate_z <= Top - Height) |>
+  filter(p_throws == "L" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, color = "red", fill = "red")) +
+  geom_hex(bins = 10) +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#RE24, Strike Zone for Fast Bats, LHP, Breaking Ball (<2 strikes)
+
+```{r}
+Data |>
+  filter(!is.na(delta_run_exp)) |>
+  filter(Swing == 1) |>
+  filter(strikes < 2) |>
+  filter(p_throws == "L" & pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#Morel's Density Comparison LHP Breaking Ball <2 strikes
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(p_throws == "L" & pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = Swing)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "Swing") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+#The best areas for RE24 are in the middle of the zone, between 1.7 and 3.3 feet. Morel has yet to swing at a pitch in this zone, swinging mostly at down and inside pitches. The ideal swing length is between 7.1 and 8.4 feet between 75 and 77 mph.
+
+```{r}
+Data |>
+  filter(strikes < 2) |>
+  filter(plate_x >= Left + Width & plate_x <= Right - (Width/2) &
+           plate_z >= 1.7 & plate_z <= 3.3) |>
+  filter(p_throws == "L" & pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(plate_x >= Left + Width & plate_x <= Right - (Width/2) &
+           plate_z >= 1.7 & plate_z <= 3.3) |>
+  filter(p_throws == "L" & pitch_name %in% c("Curveball", "Slider", "Sweeper")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, color = "red", fill = "red")) +
+  geom_hex(bins = 5) +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#RE24, Strike Zone for Fast Bats, LHP, Offspeed (<2 strikes)
+
+```{r}
+Data |>
+  filter(!is.na(delta_run_exp)) |>
+  filter(Swing == 1) |>
+  filter(strikes < 2) |>
+  filter(p_throws == "L" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#Morel's Density Comparison LHP Offspeed <2 strikes
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(p_throws == "L" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = plate_x, y = plate_z, z = Swing)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  labs(color=NULL) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "Swing") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Right), yend = (Bottom), color = "black") +
+  geom_segment(x = (Left), y = (Top), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom), xend = (Left), yend = (Top), color = "black") +
+  geom_segment(x = (Right), y = (Bottom), xend = (Right), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (Bottom + Height), xend = (Right), yend = (Bottom + Height), color = "black") +
+  geom_segment(x = (Left), y = (Top - Height), xend = (Right), yend = (Top - Height), color = "black") +
+  geom_segment(x = (Left + Width), y = (Bottom), xend = (Left + Width), yend = (Top), color = "black") +
+  geom_segment(x = (Right - Width), y = (Bottom), xend = (Right - Width), yend = (Top), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Right), yend = (8.5/12), color = "black") +
+  geom_segment(x = (Left), y = (8.5/12), xend = (Left), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Right), y = (8.5/12), xend = (Right), yend = (4.25/12), color = "black") +
+  geom_segment(x = (Left), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  geom_segment(x = (Right), y = (4.25/12), xend = (0), yend = (0), color = "black") +
+  xlim(-2.5,2.5) +
+  ylim(0,4.5) +
+  xlab("Plate Width") +
+  ylab("Height") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#The middle of the plate, minus the top third of the strike zone, is the best place to swing. Morel does a fine job swinging at these pitches, but swings too much at low-inside and low-outside pitches, as well as one sample in the top third. The best swing length is between 7.5 and 8.5 mph, swinging between 75 and 85 mph. Morel has not swung at enough pitches to compare, but 2 of the 3 pitches fall into the ideal combination.
+
+```{r}
+Data |>
+  filter(strikes < 2) |>
+  filter(plate_x >= Left + (3*Width/4) & plate_x <= Right - Width &
+           plate_z >= 1.75 & plate_z <= Top - Height) |>
+  filter(p_throws == "L" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 5) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(strikes < 2) |>
+  filter(plate_x >= Left + (3*Width/4) & plate_x <= Right - Width &
+           plate_z >= 1.75 & plate_z <= Top - Height) |>
+  filter(p_throws == "L" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, color = "red", fill = "red")) +
+  geom_hex(bins = 5) +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#2 Strikes RHP Fastball ideal swing speed & length for RE24
+
+```{r}
+Data |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "R" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+#The ideal bat speed is 70-80 mph, swinging 6.5-9 feet in length. Morel meets these criteria more often than not. 
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(!is.na(Swing)) |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "R" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = Swing)) +
+  geom_hex(bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "Swing") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#2 Strikes RHP Breaking Ball ideal swing speed & length for RE24
+
+```{r}
+Data |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "R" & pitch_name %in% c("Curveball", "Sweeper", "Slider")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+#Barring outliers The ideal bat speed is 65-80 mph, swinging 6.5-7.5 feet in length. Morel has the right swing speed here, but his swing length is too long. 
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(!is.na(Swing)) |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "R" & pitch_name %in% c("Curveball", "Sweeper", "Slider")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = Swing)) +
+  geom_hex(bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "Swing") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#2 Strikes RHP Offspeedl ideal swing speed & length for RE24
+
+```{r}
+Data |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "R" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+#Barring outliers The ideal bat speed is 70-80 mph, swinging 7.3-7.9 feet in length. Morel has the right swing speed here most of the time, but his swing length is too long. 
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(Swing == 1) |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "R" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, color = "red", fill = "red")) +
+  geom_hex(bins = 10) +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#2 Strikes LHP Fastball ideal swing speed & length for RE24
+
+```{r}
+Data |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "L" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+#The ideal bat speed is 70-80 mph, swinging 7.5-8.75 feet in length. Morel's only swing meets this criteria.
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(!is.na(Swing)) |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "L" & pitch_name %in% c("Fastball", "Sinker", "Cutter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = Swing)) +
+  geom_hex(bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "Swing") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#2 Strikes LHP Breaking Ball ideal swing speed & length for RE24
+
+```{r}
+Data |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "L" & pitch_name %in% c("Curveball", "Sweeper", "Slider")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 9) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+#Barring outliers The ideal bat speed is 72-78 mph, swinging 6.5-7.9 feet in length. Only 2 of Morel's 7 swings meet this criteria, as he often swung slower or longer. 
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(Swing == 1) |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "L" & pitch_name %in% c("Curveball", "Sweeper", "Slider")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, color = "red", fill = "red")) +
+  geom_hex(bins = 10) +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
+#2 Strikes LHP Offspeed ideal swing speed & length for RE24
+
+```{r}
+Data |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "L" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, z = delta_run_exp)) +
+  stat_summary_hex(fun = "mean", bins = 10) +
+  scale_fill_distiller(palette = "RdBu", direction = -1, name = "delta_run_exp") +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+#Barring outliers The ideal bat speed is 72-78 mph, swinging 7.3-8.4 feet in length. Morel only has 2 swings here, both in that criteria.
+```{r}
+Data |>
+  filter(batter_name == "Morel, Christopher") |>
+  filter(Swing == 1) |>
+  filter(strikes == 2) |>
+  filter(plate_x >= Left + 0.25 & plate_x <= Right - 0.25 &
+           plate_z >= Bottom - 0.25 & plate_z <= Top + 0.25) |>
+  filter(p_throws == "L" & pitch_name %in% c("Changeup", "Splitter")) |>
+  ggplot(aes(x = swing_length, y = bat_speed, color = "red", fill = "red")) +
+  geom_hex(bins = 10) +
+  xlab("Swing Length") +
+  ylab("Bat Speed") +
+  theme(
+    plot.title = element_text(color = "black", size = 15, face = "bold"),
+    axis.title.x = element_text(color="black", size = 13, face = "bold"),
+    axis.title.y = element_text(color="black" , size = 13, face = "bold"),
+    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+    panel.background = element_blank(),
+    panel.border = element_rect(color = "black", size = 1.5, fill = NA))
+```
+
